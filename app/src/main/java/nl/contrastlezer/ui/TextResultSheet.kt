@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -144,7 +145,7 @@ private fun LargeSheetButton(
             contentColor = background,
         ),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-        modifier = modifier.height(64.dp),
+        modifier = modifier.heightIn(min = 64.dp),
     ) {
         Icon(
             imageVector = icon,
@@ -155,7 +156,6 @@ private fun LargeSheetButton(
         Text(
             text = label,
             fontSize = 20.sp,
-            maxLines = 1,
         )
     }
 }
