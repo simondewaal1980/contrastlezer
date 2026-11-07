@@ -31,6 +31,19 @@ verdwijnen, het vormverschil van de letters blijft over.
   motoriek te bedienen is. Scherm blijft aan, vaste staande oriëntatie,
   Nederlandse UI.
 
+## Codeboek voor beginners
+
+Wil je begrijpen hoe de code in elkaar zit? In [`docs/index.html`](docs/index.html)
+staat een uitgebreid **codeboek in gewone taal**. Het legt per bestand uit wat de
+code doet, hoe het camerabeeld door de app stroomt en hoe je zelf een kleur,
+tekst of instelling kunt aanpassen. De pagina heeft een inhoudsopgave, zoekfunctie,
+codevoorbeelden en een begrippenlijst.
+
+Open de pagina lokaal in je browser, of bekijk de online versie via GitHub Pages:
+
+- **Online:** <https://simondewaal1980.github.io/contrastlezer/>
+- **Bron:** [`docs/index.html`](docs/index.html)
+
 ## Vereisten
 
 - Android 13 (API 33) of nieuwer.

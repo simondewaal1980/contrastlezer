@@ -1,0 +1,1977 @@
+<!doctype html>
+<html lang="nl" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Codeboek · Contrastlezer</title>
+  <meta name="description" content="Een codeboek in gewone taal: lees hoe de Android-app Contrastlezer werkt, wat elk bestand doet en waar je zelf iets kunt aanpassen.">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0a0a0c">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23ffd500'/%3E%3Ctext x='32' y='45' font-family='Arial,sans-serif' font-size='34' font-weight='bold' text-anchor='middle' fill='%23000'%3EAa%3C/text%3E%3C/svg%3E">
+  <script>
+    /* Vroeg toepassen zodat het scherm niet eerst fel oplicht. */
+    (function () {
+      try {
+        var thema = localStorage.getItem("contrastlezer-codeboek-thema");
+        if (thema === "light" || thema === "dark") {
+          document.documentElement.setAttribute("data-theme", thema);
+        }
+        var tekst = localStorage.getItem("contrastlezer-codeboek-tekst");
+        if (tekst === "0" || tekst === "1" || tekst === "2") {
+          document.documentElement.setAttribute("data-text", tekst);
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#inhoud">Direct naar de inhoud</a>
+
+  <div class="progress" aria-hidden="true">
+    <div class="progress__bar" id="progress-bar"></div>
+  </div>
+
+  <header class="hero">
+    <div class="shell">
+      <div class="topbar">
+        <a class="brand" href="#top">
+          <span class="brand__mark" aria-hidden="true">Aa</span>
+          <span>Contrastlezer <span aria-hidden="true">·</span> Codeboek</span>
+        </a>
+
+        <div class="tools">
+          <div class="text-size" role="group" aria-label="Lettergrootte aanpassen">
+            <button class="text-size__btn" type="button" data-text-size="0" aria-pressed="true" aria-label="Normale lettergrootte">A</button>
+            <button class="text-size__btn" type="button" data-text-size="1" aria-pressed="false" aria-label="Grotere lettergrootte">A+</button>
+            <button class="text-size__btn" type="button" data-text-size="2" aria-pressed="false" aria-label="Extra grote lettergrootte">A++</button>
+          </div>
+          <button class="tool-btn" id="theme-toggle" type="button" aria-pressed="false" aria-label="Schakel over naar licht thema">
+            <span class="tool-icon" aria-hidden="true">☀</span><span class="tool-label">Licht</span>
+          </button>
+          <a class="tool-btn tool-btn--github" href="https://github.com/simondewaal1980/contrastlezer" target="_blank" rel="noopener noreferrer">
+            <span aria-hidden="true">↗</span><span class="tool-label">GitHub</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="hero__inner">
+        <div>
+          <p class="hero__kicker">Codeboek · voor beginners</p>
+          <h1>Zo werkt <span>Contrastlezer</span></h1>
+          <p class="hero__lede">
+            Contrastlezer is een Android-app die camerabeeld <strong>live omzet naar twee
+            hoog-contrastkleuren</strong>. Dit codeboek legt in gewone taal uit wat de app doet,
+            hoe de onderdelen samenwerken en waar je zelf iets kunt veranderen. Je hoeft nog
+            geen Android-ontwikkelaar te zijn om het te begrijpen.
+          </p>
+
+          <div class="badges" aria-label="Technieken die de app gebruikt">
+            <span class="badge badge--accent">Kotlin</span>
+            <span class="badge">Jetpack Compose</span>
+            <span class="badge">CameraX</span>
+            <span class="badge">Android 13+</span>
+            <span class="badge">100% op je toestel</span>
+          </div>
+
+          <div class="hero__actions">
+            <a class="button button--primary" href="#welkom">Begin met lezen <span aria-hidden="true">→</span></a>
+            <a class="button" href="#bestanden">Bekijk de bestanden</a>
+          </div>
+        </div>
+
+        <div class="phone-wrap" aria-hidden="true">
+          <div class="phone">
+            <span class="phone__notch"></span>
+            <div class="phone__screen">
+              <div class="mock-camera">
+                <div class="mock-camera__label">
+                  <span>Hoog contrast</span>
+                  <span>2,0×</span>
+                </div>
+                <div class="mock-word">Lees<br>mij<small>Contrastlezer</small></div>
+                <div class="mock-rule"></div>
+              </div>
+              <div class="mock-actions">
+                <div class="mock-palette">
+                  <i style="background:#ffd500"></i>
+                  <i style="background:#000"></i>
+                  <i style="background:#ff0033"></i>
+                  <i style="background:#00e5ff"></i>
+                </div>
+                <div class="mock-buttons">
+                  <span>❄</span><span>◉</span><span>⚙</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="phone-note">Zwarte letters, gele achtergrond. Kleur weg, vorm blijft.</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="shell layout">
+    <aside class="sidebar" aria-label="Inhoudsopgave en zoeken">
+      <h2 class="sidebar__title">Op deze pagina</h2>
+
+      <div class="search">
+        <label class="visually-hidden" for="toc-search">Zoek in het codeboek</label>
+        <input class="search__input" id="toc-search" type="search" placeholder="Zoek een onderwerp…" autocomplete="off">
+        <span class="search__hint" aria-hidden="true">/</span>
+        <p class="search__count" id="search-count" aria-live="polite"></p>
+      </div>
+
+      <ol class="toc">
+        <li><a href="#welkom">Welkom</a></li>
+        <li><a href="#app">De app in één minuut</a></li>
+        <li><a href="#architectuur">De grote lijn</a></li>
+        <li><a href="#bestanden">Bestanden en mappen</a></li>
+        <li><a href="#mainactivity">Startpunt: MainActivity</a></li>
+        <li><a href="#scherm">Het scherm</a></li>
+        <li><a href="#camera">De camera</a></li>
+        <li><a href="#frame">Het beeld filteren</a></li>
+        <li><a href="#beweging">Beweging meten</a></li>
+        <li><a href="#kleuren">Kleuren</a></li>
+        <li><a href="#opslaan">Foto opslaan</a></li>
+        <li><a href="#thema">Thema en vormgeving</a></li>
+        <li><a href="#tests">Tests</a></li>
+        <li><a href="#aanpassen">Zelf aanpassen</a></li>
+        <li><a href="#begrippen">Begrippenlijst</a></li>
+        <li><a href="#vragen">Veelgestelde vragen</a></li>
+      </ol>
+
+      <div class="sidebar__foot">
+        <p><strong>Tip:</strong> druk op <kbd>/</kbd> om te zoeken.</p>
+        <p>Dit codeboek hoort bij Contrastlezer 1.0.</p>
+      </div>
+    </aside>
+
+    <main id="inhoud">
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="welkom">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">01</span> Start hier <span class="level level--1">Makkelijk</span></p>
+          <h2>Welkom in het codeboek</h2>
+          <p class="chapter__intro">
+            Je hebt een app voor je waarvan de code bestaat uit ongeveer 2.300 regels Kotlin,
+            XML en Gradle. Dat klinkt veel, maar de app is netjes in kleine stukjes verdeeld.
+            Elk stukje heeft één duidelijke taak. Dit codeboek loopt die stukjes één voor één langs.
+          </p>
+        </div>
+
+        <h3>Voor wie is dit codeboek?</h3>
+        <p>
+          Voor iedereen die wil begrijpen hoe de app werkt: een beginner die Kotlin leert,
+          een ontwerper die de bediening wil aanpassen, of iemand die wil controleren of de
+          app doet wat er beloofd wordt. Je hebt <strong>geen</strong> ervaring met Android
+          nodig. Als je weet wat een bestand en een map zijn, kun je beginnen.
+        </p>
+
+        <h3>Hoe lees je dit codeboek?</h3>
+        <div class="cards">
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">1</span>
+            <h4>Lees de grote lijn</h4>
+            <p>Hoofdstuk 2 en 3 vertellen wat de app doet en hoe de onderdelen samenwerken. Begin daar.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">2</span>
+            <h4>Volg de leesroute</h4>
+            <p>Hoofdstuk 4 wijst de weg door de bestanden. Daarna volg je de code van het scherm naar het beeld.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">3</span>
+            <h4>Pas iets kleins aan</h4>
+            <p>Hoofdstuk 14 heeft kant-en-klare recepten, bijvoorbeeld een nieuwe kleurcombinatie toevoegen.</p>
+          </div>
+        </div>
+
+        <div class="callout callout--tip">
+          <span class="callout__icon" aria-hidden="true">✓</span>
+          <div>
+            <p><strong>Je hoeft niet alles te onthouden.</strong> Lees eerst de hoofdstukken 2 en 3.
+            De rest kun je opzoeken wanneer je een bepaald onderdeel nodig hebt. De begrippenlijst
+            achterin legt lastige woorden nog eens rustig uit.</p>
+          </div>
+        </div>
+
+        <h3>De drie moeilijkheidsniveaus</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Label</th><th>Betekenis</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="pill pill--easy">Makkelijk</span></td><td>Je kunt dit lezen zonder programmeerervaring. Veel uitleg, weinig code.</td></tr>
+              <tr><td><span class="pill pill--mid">Gemiddeld</span></td><td>Je leest stukjes Kotlin. De tekst legt uit wat elk stukje doet.</td></tr>
+              <tr><td><span class="pill pill--hard">Diepgang</span></td><td>Rekentrucs en prestatiekeuzes. Sla gerust over bij de eerste lezing.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--info">
+          <span class="callout__icon" aria-hidden="true">i</span>
+          <div>
+            <p><strong>Alle code in dit codeboek is een uittreksel.</strong> Soms zijn imports,
+            foutafhandeling of lange lijsten weggelaten zodat je de kern ziet. De volledige,
+            actuele code staat altijd in de repository op GitHub.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="app">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">02</span> De app <span class="level level--1">Makkelijk</span></p>
+          <h2>Wat doet Contrastlezer?</h2>
+          <p class="chapter__intro">
+            Richt je camera op tekst die slecht leesbaar is. De app maakt het beeld meteen
+            zwart-wit, geel-zwart of een van de andere combinaties. Kleuren verdwijnen,
+            maar de vorm van de letters blijft. Daardoor lees je tekst die eerst wegviel
+            tegen een drukke verpakking.
+          </p>
+        </div>
+
+        <h3>In vier stappen</h3>
+        <ol class="steps">
+          <li>
+            <strong>Je geeft cameratoegang.</strong>
+            <p>Zonder camera kan de app niets zien. Er wordt niets naar internet gestuurd.</p>
+          </li>
+          <li>
+            <strong>Je richt de camera op de tekst.</strong>
+            <p>De app verwerkt elk camerabeeld direct. Het scherm laat het resultaat zien.</p>
+          </li>
+          <li>
+            <strong>Je kiest een kleurcombinatie en vergroot.</strong>
+            <p>Zes combinaties, een zoomknop, een schuif en knijpen met twee vingers.</p>
+          </li>
+          <li>
+            <strong>Je zet het beeld vast of maakt een foto.</strong>
+            <p>Vastzetten maakt een scherpe foto en zet die stil. Daarna kun je rustig lezen en opslaan.</p>
+          </li>
+        </ol>
+
+        <h3>Wat de app allemaal kan</h3>
+        <div class="cards">
+          <div class="card card--accent">
+            <span class="card__icon" aria-hidden="true">◉</span>
+            <h4>Live hoog contrast</h4>
+            <p>Elk camerabeeld wordt binnen een fractie van een seconde omgezet naar twee kleuren.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">Aa</span>
+            <h4>Zes kleurmodi</h4>
+            <p>Zwart op wit, wit op zwart, geel op zwart, zwart op geel, blauw op wit en cyaan op zwart.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">❄</span>
+            <h4>Vastzetten</h4>
+            <p>Een echte foto wordt verwerkt en stilgezet. Dat leest rustiger dan een bewegend live-beeld.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">＋</span>
+            <h4>Vergroten</h4>
+            <p>Grote plus- en minknoppen, een zoom-schuif en knijpgebaar. Een vastgezet beeld kun je verschuiven.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">▣</span>
+            <h4>Foto bewaren</h4>
+            <p>Het verwerkte beeld gaat naar <code>Afbeeldingen/Contrastlezer</code> in je galerij.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">≈</span>
+            <h4>Rustig beeld</h4>
+            <p>Bij beweging houdt de app het laatste scherpe beeld even vast. Zo springen letters niet heen en weer.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">🔒</span>
+            <h4>Privé</h4>
+            <p>De app heeft geen internettoegang. Beelden blijven op je toestel.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">✋</span>
+            <h4>Grote knoppen</h4>
+            <p>Royale raakvlakken en duidelijke labels, ook bruikbaar met minder goede motoriek.</p>
+          </div>
+        </div>
+
+        <h3>Wat de app níet doet</h3>
+        <p>
+          Contrastlezer is <strong>geen tekstherkenner</strong> (geen OCR). De app leest de
+          letters niet voor en maakt geen tekstbestand. Ze verandert alleen kleuren, zodat
+          <em>jij</em> de tekst met je eigen ogen kunt lezen. Dat is expres: het werkt met
+          elke taal, elk lettertype en elk handschrift, en het is snel en privé.
+        </p>
+
+        <div class="callout callout--warn">
+          <span class="callout__icon" aria-hidden="true">!</span>
+          <div>
+            <p><strong>Geen medisch hulpmiddel.</strong> De app ondersteunt het lezen, maar
+            vervangt geen bril, vergrootglas of medisch advies. Gebruik hem zoals hij voor jou
+            prettig werkt.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="architectuur">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">03</span> Samenhang <span class="level level--1">Makkelijk</span></p>
+          <h2>De grote lijn</h2>
+          <p class="chapter__intro">
+            De app bestaat uit drie lagen: het scherm, de camera en de beeldbewerking.
+            Elke laag weet zo weinig mogelijk van de andere. Daardoor kun je één laag
+            aanpassen of testen zonder meteen alles te breken.
+          </p>
+        </div>
+
+        <div class="flow" role="img" aria-label="Het camerabeeld gaat van de camera naar de CameraController, dan naar FrameProcessor, dan als Bitmap naar het scherm.">
+          <div class="flow__step">
+            <span class="flow__num">1</span>
+            <strong>Camera</strong>
+            <small>Ongeveer 30 beelden per seconde</small>
+          </div>
+          <div class="flow__arrow" aria-hidden="true">→</div>
+          <div class="flow__step">
+            <span class="flow__num">2</span>
+            <strong>CameraController</strong>
+            <small>Pakt een frame en draait het recht</small>
+          </div>
+          <div class="flow__arrow" aria-hidden="true">→</div>
+          <div class="flow__step">
+            <span class="flow__num">3</span>
+            <strong>FrameProcessor</strong>
+            <small>Maakt van elk beeld twee kleuren</small>
+          </div>
+          <div class="flow__arrow" aria-hidden="true">→</div>
+          <div class="flow__step">
+            <span class="flow__num">4</span>
+            <strong>Bitmap</strong>
+            <small>Het verwerkte beeld in het geheugen</small>
+          </div>
+          <div class="flow__arrow" aria-hidden="true">→</div>
+          <div class="flow__step">
+            <span class="flow__num">5</span>
+            <strong>Scherm</strong>
+            <small>Compose tekent het beeld</small>
+          </div>
+        </div>
+
+        <h3>De drie lagen</h3>
+        <div class="cards">
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">▤</span>
+            <h4>Scherm · <code>ui/</code></h4>
+            <p>Knoppen, schuiven, tekst, het vastgezette beeld en de cameratoestemming. Alles wat je ziet en aanraakt.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">◉</span>
+            <h4>Camera · <code>camera/</code></h4>
+            <p>Start de camera, ontvangt beelden, maakt een echte foto en regelt stabilisatie en zoom.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">Aa</span>
+            <h4>Beeld · <code>image/</code></h4>
+            <p>De rekenkern: pixels vergelijken, kleuren kiezen, beweging meten en foto's opslaan.</p>
+          </div>
+        </div>
+
+        <h3>Wat gebeurt er bij één camerabeeld?</h3>
+        <ol class="steps">
+          <li><strong>De camera levert een frame.</strong><p>Dat is een beeld in het geheugen, opgebouwd uit pixels met een rood-, groen-, blauw- en doorzichtigheidswaarde.</p></li>
+          <li><strong>De controller maakt er een Bitmap van.</strong><p>Een Bitmap is een rechthoekig beeld dat Android kan lezen en tekenen. Het frame wordt ook gedraaid als de telefoon anders vasthield.</p></li>
+          <li><strong>De renderer kopieert de pixels naar een rij getallen.</strong><p>Rekenen met getallen gaat sneller dan rekenen met een Bitmap. Elk getal stelt één pixel voor.</p></li>
+          <li><strong>De bewegingsdetector kijkt of het beeld rustig is.</strong><p>Bij veel beweging wordt het vorige beeld even vastgehouden. Bij stilstand gaat elk frame door.</p></li>
+          <li><strong>FrameProcessor kiest per pixel: tekst of achtergrond.</strong><p>De gekozen kleuren worden in de getallenrij gezet.</p></li>
+          <li><strong>De getallen gaan terug in een Bitmap.</strong><p>Die Bitmap wordt aan het scherm gegeven. Compose tekent hem direct.</p></li>
+        </ol>
+
+        <h3>Het belangrijkste idee: een pixel is een getal</h3>
+        <p>
+          Elke pixel is één 32-bits getal, geschreven als <code>0xAARRGGBB</code>.
+          De vier paren letters staan voor:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Deel</th><th>Betekenis</th><th>Voorbeeld</th></tr></thead>
+            <tbody>
+              <tr><td><code>AA</code></td><td>Alpha: hoe doorzichtig (00 = onzichtbaar, FF = volledig zichtbaar)</td><td><code>FF</code></td></tr>
+              <tr><td><code>RR</code></td><td>Rood, van 00 tot FF (0–255)</td><td><code>FF</code> = vol rood</td></tr>
+              <tr><td><code>GG</code></td><td>Groen, van 00 tot FF</td><td><code>D5</code> = veel groen</td></tr>
+              <tr><td><code>BB</code></td><td>Blauw, van 00 tot FF</td><td><code>00</code> = geen blauw</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          De kleur geel is bijvoorbeeld <code>0xFFFFD500</code>: volledig zichtbaar,
+          maximaal rood, veel groen en geen blauw. In de code wordt <code>0xFF000000</code>
+          gebruikt voor zwart en <code>0xFFFFFFFF</code> voor wit.
+        </p>
+
+        <div class="callout callout--tip">
+          <span class="callout__icon" aria-hidden="true">✓</span>
+          <div>
+            <p><strong>Waarom deze verdeling?</strong> De beeldbewerking is pure Kotlin zonder
+            Android-klassen. Daardoor kan dezelfde code op een gewone computer worden getest,
+            zonder telefoon of emulator. Dat zie je terug in hoofdstuk 13.</p>
+          </div>
+        </div>
+
+        <details class="deep">
+          <summary>Dieper: waarom de UI niet rechtstreeks in de camera schrijft</summary>
+          <div>
+            <p>
+              Een camera kan tientallen beelden per seconde leveren. Het scherm moet ondertussen
+              vlot blijven reageren op je vingers. Daarom staan de CameraController en de
+              beeldverwerking op een aparte achtergrondthread.
+            </p>
+            <p>
+              De UI zet alleen instellingen klaar, zoals de gekozen kleuren en de drempel.
+              Die waarden zijn <code>@Volatile</code>: ze mogen door twee threads worden gelezen
+              en geschreven. De camera-thread pakt steeds de nieuwste waarde. Zo hoeft het scherm
+              nooit te wachten op een frame.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="bestanden">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">04</span> Overzicht <span class="level level--1">Makkelijk</span></p>
+          <h2>Bestanden en mappen</h2>
+          <p class="chapter__intro">
+            De app heeft een kleine, overzichtelijke mapstructuur. Hieronder zie je waar
+            elk bestand staat en wat het doet. Je hoeft alleen de map
+            <code>app/src/main/java/nl/contrastlezer/</code> te openen om de app-code te vinden.
+          </p>
+        </div>
+
+        <div class="codeblock codeblock--sm">
+          <div class="codebar">
+            <span class="codebar__file">Mappenstructuur</span>
+            <span class="codebar__lang">Overzicht</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>contrastlezer/
+├── app/
+│   ├── build.gradle.kts          ← instellingen van de app
+│   └── src/
+│       ├── main/
+│       │   ├── AndroidManifest.xml
+│       │   ├── java/nl/contrastlezer/
+│       │   │   ├── MainActivity.kt
+│       │   │   ├── camera/
+│       │   │   │   └── CameraController.kt
+│       │   │   ├── image/
+│       │   │   │   ├── FrameProcessor.kt
+│       │   │   │   ├── FrameMotionDetector.kt
+│       │   │   │   ├── GallerySaver.kt
+│       │   │   │   └── Palettes.kt
+│       │   │   └── ui/
+│       │   │       ├── ContrastlezerScreen.kt
+│       │   │       └── Theme.kt
+│       │   └── res/
+│       │       └── values/       ← teksten, kleuren, thema
+│       └── test/java/nl/contrastlezer/image/
+│           ├── FrameProcessorTest.kt
+│           ├── FrameProcessorStabilityTest.kt
+│           └── FrameMotionDetectorTest.kt
+├── gradle/libs.versions.toml     ← versies van bibliotheken
+├── settings.gradle.kts
+└── README.md</code></pre>
+        </div>
+
+        <h3>Wie doet wat?</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Bestand</th><th>Taak in één zin</th><th>Niveau</th><th>Regels</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>MainActivity.kt</code></td><td>Start de app en zet het eerste scherm aan.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>26</td></tr>
+              <tr><td><code>ui/ContrastlezerScreen.kt</code></td><td>Alle knoppen, het camerabeeld, de instellingen en het vastgezette beeld.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>930</td></tr>
+              <tr><td><code>camera/CameraController.kt</code></td><td>Start de camera, verwerkt live beelden, maakt foto's en regelt stabilisatie.</td><td><span class="pill pill--hard">Diepgang</span></td><td>468</td></tr>
+              <tr><td><code>image/FrameProcessor.kt</code></td><td>De rekenkern die elke pixel tekst of achtergrond maakt.</td><td><span class="pill pill--hard">Diepgang</span></td><td>238</td></tr>
+              <tr><td><code>image/FrameMotionDetector.kt</code></td><td>Meet hoeveel het beeld sinds het vorige frame is veranderd.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>89</td></tr>
+              <tr><td><code>image/Palettes.kt</code></td><td>De lijst met zes hoog-contrastkleuren.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>21</td></tr>
+              <tr><td><code>image/GallerySaver.kt</code></td><td>Schrijft een verwerkte foto naar de galerij.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>47</td></tr>
+              <tr><td><code>ui/Theme.kt</code></td><td>Kleuren en lettergroottes van de app zelf.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>54</td></tr>
+              <tr><td><code>res/values/strings.xml</code></td><td>Alle Nederlandse teksten op één plek.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>35</td></tr>
+              <tr><td><code>AndroidManifest.xml</code></td><td>Vraagt cameratoegang en legt vast dat de app staand is.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>36</td></tr>
+              <tr><td><code>app/build.gradle.kts</code></td><td>Kiest Android-versies en bibliotheken.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>71</td></tr>
+              <tr><td><code>gradle/libs.versions.toml</code></td><td>Zet de versies van Compose, CameraX en Kotlin bij elkaar.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>32</td></tr>
+              <tr><td><code>src/test/…</code></td><td>Drie testbestanden die de rekenkern controleren.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>243</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>De leesroute voor beginners</h3>
+        <p>Wil je de code echt volgen? Lees in deze volgorde:</p>
+        <ol class="steps">
+          <li><strong>MainActivity.kt</strong><p>Klein en overzichtelijk. Hier begint alles.</p></li>
+          <li><strong>ContrastlezerScreen.kt</strong><p>Het grootste bestand, maar je hoeft niet alles tegelijk te lezen. Zoek de functie die je interessant vindt.</p></li>
+          <li><strong>CameraController.kt</strong><p>Volg één frame: van <code>handleFrame</code> naar <code>renderer.render</code>.</p></li>
+          <li><strong>FrameProcessor.kt</strong><p>De kern. Lees eerst de grote stappen, dan de formules.</p></li>
+          <li><strong>De kleine bestanden</strong><p>Palettes, GallerySaver en Theme zijn kort en snel te begrijpen.</p></li>
+        </ol>
+
+        <div class="callout callout--info">
+          <span class="callout__icon" aria-hidden="true">i</span>
+          <div>
+            <p><strong>De bestandsnamen zeggen al veel.</strong> <code>camera/</code> gaat over
+            de camera, <code>image/</code> over beeld en <code>ui/</code> over het scherm.
+            Binnen een bestand staan de belangrijkste functies meestal van boven naar beneden:
+            eerst instellingen, dan de hoofdfunctie, dan hulpfuncties.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="mainactivity">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">05</span> Startpunt <span class="level level--1">Makkelijk</span></p>
+          <h2>MainActivity: het eerste wat Android start</h2>
+          <p class="chapter__intro">
+            Als je op het app-icoon tikt, start Android een <em>Activity</em>. Dat is één
+            scherm met eigen code. Contrastlezer heeft er maar één: <code>MainActivity</code>.
+            Het bestand is klein, maar regelt drie belangrijke dingen.
+          </p>
+        </div>
+
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">MainActivity.kt</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+        )
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        setContent {
+            ContrastlezerTheme {
+                ContrastlezerScreen()
+            }
+        }
+    }
+}</code></pre>
+        </div>
+
+        <h3>Wat gebeurt hier?</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Regel</th><th>Wat het doet</th><th>Waarom</th></tr></thead>
+            <tbody>
+              <tr><td><code>onCreate</code></td><td>Android roept deze functie aan als het scherm wordt gemaakt.</td><td>Dit is het startpunt van je app.</td></tr>
+              <tr><td><code>enableEdgeToEdge</code></td><td>Laat het beeld tot achter de statusbalk en navigatiebalk lopen.</td><td>Het camerabeeld vult zo het hele scherm.</td></tr>
+              <tr><td><code>FLAG_KEEP_SCREEN_ON</code></td><td>Houdt het scherm aan zolang de app open is.</td><td>Je wilt niet dat het scherm uitgaat terwijl je leest.</td></tr>
+              <tr><td><code>setContent</code></td><td>Start de Compose-interface.</td><td>Alles wat je ziet, wordt hier opgebouwd.</td></tr>
+              <tr><td><code>ContrastlezerTheme</code></td><td>Past de kleuren en letters van de app toe.</td><td>Zo ziet elk onderdeel er hetzelfde uit.</td></tr>
+              <tr><td><code>ContrastlezerScreen</code></td><td>Het echte hoofdscherm.</td><td>Daar zit alle bediening.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--tip">
+          <span class="callout__icon" aria-hidden="true">✓</span>
+          <div>
+            <p><strong>Een Activity is als een toneelstuk.</strong> Android opent het doek
+            (<code>onCreate</code>), en jouw code zet de acteurs neer (<code>setContent</code>).
+            Daarna neemt Compose het over: als er iets verandert, tekent het scherm zichzelf
+            opnieuw.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="scherm">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">06</span> De interface <span class="level level--2">Gemiddeld</span></p>
+          <h2>Het scherm: knoppen, toestemming en standen</h2>
+          <p class="chapter__intro">
+            <code>ContrastlezerScreen.kt</code> is het grootste bestand. Het beschrijft
+            wat je ziet en wat er gebeurt als je iets aanraakt. Het mooie is: je kunt het
+            scherm stukje bij stukje lezen. Elke <em>Composable</em> is een klein bouwblok.
+          </p>
+        </div>
+
+        <h3>Wat is Compose?</h3>
+        <p>
+          Jetpack Compose bouwt een scherm met functies. Zo'n functie heet een
+          <strong>Composable</strong>. Je schrijft bijvoorbeeld <code>Text("Hallo")</code>
+          en Compose tekent die tekst. Een knop is ook een Composable, net als een rij,
+          een kolom of een afbeelding. Grote schermen ontstaan door kleine Composable-functies
+          in elkaar te zetten.
+        </p>
+
+        <div class="callout callout--info">
+          <span class="callout__icon" aria-hidden="true">i</span>
+          <div>
+            <p><strong>Een scherm is geen verzameling plaatjes.</strong> Compose rekent het
+            scherm steeds opnieuw uit op basis van de huidige gegevens. Verandert de zoom,
+            dan tekent Compose het beeld opnieuw met de nieuwe waarde. Jij hoeft niets handmatig
+            te verversen.</p>
+          </div>
+        </div>
+
+        <h3>Stap 1: mag de app de camera gebruiken?</h3>
+        <p>
+          Android geeft apps niet automatisch toegang tot de camera. De app moet het vragen,
+          en jij moet toestemming geven. Dat gebeurt in <code>ContrastlezerScreen</code>:
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">ContrastlezerScreen.kt · toestemming</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>var granted by remember { mutableStateOf(hasCameraPermission(context)) }
+var deniedOnce by remember { mutableStateOf(false) }
+
+val launcher = rememberLauncherForActivityResult(
+    ActivityResultContracts.RequestPermission(),
+) { result -&gt;
+    granted = result
+    if (!result) deniedOnce = true
+}
+
+LaunchedEffect(Unit) {
+    if (!granted) launcher.launch(Manifest.permission.CAMERA)
+}</code></pre>
+        </div>
+        <p>
+          <code>granted</code> onthoudt of de toestemming er is. <code>deniedOnce</code>
+          onthoudt of je eerder "nee" hebt gezegd, zodat de app een uitgebreidere uitleg kan
+          tonen. De <code>launcher</code> opent het Android-venster met de vraag. Zodra je
+          antwoordt, wordt de code tussen de accolades uitgevoerd.
+        </p>
+        <p>
+          Als je geen toestemming geeft, toont de app <code>PermissionScreen</code>: een
+          vriendelijke uitleg met een grote knop om het opnieuw te vragen. De app crasht dus
+          niet en blijft begrijpelijk.
+        </p>
+
+        <h3>Stap 2: het geheugen van het scherm</h3>
+        <p>
+          Het scherm moet veel dingen onthouden: welke kleur je koos, hoe ver je hebt
+          ingezoomd, of het beeld vaststaat. Zulke gegevens heten <strong>state</strong>.
+          In Compose maak je ze met <code>remember</code> en <code>mutableStateOf</code>.
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">ContrastlezerScreen.kt · state</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>var paletteIndex by rememberSaveable { mutableIntStateOf(0) }
+var sensitivity by rememberSaveable { mutableFloatStateOf(0.6f) }
+var zoom by rememberSaveable { mutableFloatStateOf(1f) }
+var lensFacing by rememberSaveable { mutableIntStateOf(CameraSelector.LENS_FACING_BACK) }
+var frozen by remember { mutableStateOf&lt;Bitmap?&gt;(null) }
+var busy by remember { mutableStateOf(false) }
+var showSettings by rememberSaveable { mutableStateOf(false) }</code></pre>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Naam</th><th>Bewaart</th><th>Beginwaarde</th></tr></thead>
+            <tbody>
+              <tr><td><code>paletteIndex</code></td><td>Welke van de zes kleurcombinaties actief is.</td><td><code>0</code> = zwart op wit</td></tr>
+              <tr><td><code>sensitivity</code></td><td>Hoe snel iets als tekst wordt gezien.</td><td><code>0.6</code></td></tr>
+              <tr><td><code>zoom</code></td><td>De cameravergroting.</td><td><code>1</code> = niet vergroot</td></tr>
+              <tr><td><code>lensFacing</code></td><td>Voor- of achtercamera.</td><td>Achtercamera</td></tr>
+              <tr><td><code>torchOn</code></td><td>Of de zaklamp aan is.</td><td><code>false</code></td></tr>
+              <tr><td><code>frozen</code></td><td>Het vastgezette beeld, of niets.</td><td><code>null</code></td></tr>
+              <tr><td><code>busy</code></td><td>Of de app even met een foto bezig is.</td><td><code>false</code></td></tr>
+              <tr><td><code>stabilization</code></td><td>Of het rustige beeld aan staat.</td><td><code>true</code></td></tr>
+              <tr><td><code>showSettings</code></td><td>Of het instellingenpaneel open is.</td><td><code>false</code></td></tr>
+              <tr><td><code>liveFrame</code></td><td>Het laatst verwerkte camerabeeld.</td><td><code>null</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          Waarom soms <code>rememberSaveable</code> en soms <code>remember</code>?
+          <code>rememberSaveable</code> bewaart de waarde ook als Android het scherm
+          opnieuw opbouwt, bijvoorbeeld na een schermrotatie of als je even naar een andere
+          app gaat. Voor keuzes als kleur en zoom is dat gewenst. Een foto in het geheugen
+          (<code>frozen</code>) is te groot om op die manier te bewaren; die staat alleen
+          tijdelijk in het geheugen.
+        </p>
+
+        <h3>Stap 3: reageren op veranderingen</h3>
+        <p>
+          Compose heeft kleine hulpstukken die code uitvoeren wanneer iets verandert.
+          In dit bestand zie je ze vaak:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Hulpstuk</th><th>Wanneer draait de code?</th><th>Voorbeeld in de app</th></tr></thead>
+            <tbody>
+              <tr><td><code>LaunchedEffect(lensFacing)</code></td><td>Als de gekozen camera verandert.</td><td>De camera opnieuw starten.</td></tr>
+              <tr><td><code>LaunchedEffect(zoom)</code></td><td>Als de zoom verandert.</td><td>De camera vragen om verder in te zoomen.</td></tr>
+              <tr><td><code>LaunchedEffect(paletteIndex, threshold)</code></td><td>Als kleur of gevoeligheid verandert.</td><td>De nieuwe waarden aan de camera geven.</td></tr>
+              <tr><td><code>LaunchedEffect(frozen)</code></td><td>Als het beeld wordt vastgezet of hervat.</td><td>De live verwerking pauzeren of hervatten.</td></tr>
+              <tr><td><code>DisposableEffect(controller)</code></td><td>Bij het begin en het einde van het scherm.</td><td>Een functie koppelen die elk frame ontvangt; de camera netjes vrijgeven.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout--warn">
+          <span class="callout__icon" aria-hidden="true">!</span>
+          <div>
+            <p><strong>Een klein maar belangrijk detail:</strong> <code>DisposableEffect</code>
+            zet <code>controller.onFrame = null</code> en roept <code>controller.release()</code>
+            aan wanneer het scherm verdwijnt. Zonder dat zou de camera-thread blijven draaien
+            en zou de app geheugen lekken.</p>
+          </div>
+        </div>
+
+        <h3>Stap 4: de drie grote knoppen</h3>
+        <div class="cards">
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">❄</span>
+            <h4>Vastzetten / Hervat</h4>
+            <p>Maakt een echte foto, verwerkt die en zet het resultaat stil. Nog een keer drukken hervat het live-beeld.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">◉</span>
+            <h4>Foto</h4>
+            <p>Slaat het verwerkte beeld op. Staat het beeld vast, dan wordt precies dat beeld bewaard.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">⚙</span>
+            <h4>Instellingen</h4>
+            <p>Opent het paneel met gevoeligheid, zoom, stabilisatie, zaklamp en camerawissel.</p>
+          </div>
+        </div>
+
+        <h4>Hoe werkt "Vastzetten" in de code?</h4>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">ContrastlezerScreen.kt · snap()</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>fun snap(onResult: (Bitmap) -&gt; Unit) {
+    if (busy) return
+    scope.launch {
+        busy = true
+        try {
+            val bitmap = controller.captureProcessed(palette, threshold)
+            onResult(bitmap)
+        } catch (t: Throwable) {
+            notice = captureFailedMessage
+        } finally {
+            busy = false
+        }
+    }
+}</code></pre>
+        </div>
+        <p>
+          <code>snap</code> doet alsof het één woord is: "maak een foto en verwerk hem".
+          De <code>busy</code>-vlag voorkomt dat je twee foto's tegelijk start. Een
+          <code>scope.launch</code> start een coroutine: code die op de achtergrond mag wachten
+          zonder het scherm te laten vastlopen. Lukt het niet, dan verschijnt een melding.
+          In alle gevallen gaat <code>busy</code> daarna weer op <code>false</code>.
+        </p>
+
+        <h3>Het vastgezette beeld</h3>
+        <p>
+          <code>FrozenOverlay</code> legt een laag over het live-beeld. Die laag heeft zijn
+          eigen zoom en verschuiving. Met één vinger sleep je het beeld opzij; met twee
+          vingers knijp je om te zoomen; dubbeltikken zet alles terug. Rechts staan twee
+          grote ronde knoppen van 60 dp, zodat vergroten ook lukt als een knijpgebaar
+          moeilijk is.
+        </p>
+        <p>
+          De schaal loopt van 1× tot 8×. Zodra je terug op 1× staat, wordt de verschuiving
+          automatisch op nul gezet. Anders zou het beeld buiten het scherm kunnen verdwijnen.
+        </p>
+
+        <h3>Het instellingenpaneel</h3>
+        <p>
+          <code>SettingsPanel</code> bevat een schakelaar voor stabilisatie, een schuif voor
+          gevoeligheid, eventueel een zoom-schuif, en knoppen voor de zaklamp en het wisselen
+          van camera. De app vraagt aan het toestel of er een flitser is en of hardware-
+          stabilisatie beschikbaar is. Is iets niet aanwezig, dan wordt de knop niet getoond
+          of blijft de melding weg.
+        </p>
+
+        <h3>Toegankelijkheid zit in de details</h3>
+        <ul>
+          <li>Elke knop heeft een <code>contentDescription</code>, zodat een schermlezer kan voorlezen wat hij doet.</li>
+          <li>De gekozen kleur krijgt de semantische eigenschap <code>selected</code>.</li>
+          <li>Knoppen zijn ruim: de grote bedieningsknoppen zijn 60–68 dp, de kleurchips 48 dp.</li>
+          <li>Bijna alle zichtbare teksten staan in <code>strings.xml</code>, niet hardgecodeerd in het scherm.</li>
+          <li>Het scherm blijft aan en staat vast in staande stand, zodat de bediening voorspelbaar blijft.</li>
+        </ul>
+
+        <details class="deep">
+          <summary>Dieper: waarom een functie als parameter wordt doorgegeven</summary>
+          <div>
+            <p>
+              <code>snap(onResult: (Bitmap) -&gt; Unit)</code> betekent: "geef mij een stukje
+              code dat ik mag uitvoeren zodra de foto klaar is". De aanroeper bepaalt wat er
+              met het resultaat gebeurt. Bij "Vastzetten" wordt het beeld in
+              <code>frozen</code> gezet; bij "Foto" wordt het opgeslagen. Dezelfde functie
+              kan dus twee verschillende dingen doen zonder dat de fotocode dat hoeft te weten.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="camera">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">07</span> Camera <span class="level level--3">Diepgang</span></p>
+          <h2>De camera aansturen</h2>
+          <p class="chapter__intro">
+            <code>CameraController.kt</code> is de brug tussen de telefoon en de app.
+            Hij start de camera, ontvangt beelden op een achtergrondthread, maakt echte
+            foto's en vraagt om stabilisatie. De rest van de app hoeft niet te weten hoe
+            CameraX werkt.
+          </p>
+        </div>
+
+        <h3>CameraX: de camera zonder de ruwe details</h3>
+        <p>
+          Android heeft een uitgebreide Camera2-API, maar die is complex. CameraX is een
+          laag erbovenop die veel voorkomende taken makkelijker maakt. Contrastlezer gebruikt
+          twee onderdelen:
+        </p>
+        <div class="cards">
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">▷</span>
+            <h4>ImageAnalysis</h4>
+            <p>Levert een stroom beelden die je zelf mag verwerken. De app gebruikt dit voor het live-beeld.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">◉</span>
+            <h4>ImageCapture</h4>
+            <p>Maakt één scherpe foto met de volledige kwaliteit van de camera. Dit gebeurt bij "Vastzetten".</p>
+          </div>
+        </div>
+
+        <h3>De camera starten</h3>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">CameraController.kt · start()</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>val analysisUseCase = ImageAnalysis.Builder()
+    .setResolutionSelector(resolutionSelector)
+    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+    .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+    .build()
+    .apply {
+        setAnalyzer(analysisExecutor) { image -&gt; handleFrame(image) }
+    }
+
+val capture = ImageCapture.Builder()
+    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+    .build()
+
+val boundCamera = provider.bindToLifecycle(
+    lifecycleOwner,
+    selector,
+    analysisUseCase,
+    capture,
+)</code></pre>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Instelling</th><th>Wat het betekent</th></tr></thead>
+            <tbody>
+              <tr><td><code>1280 × 720</code></td><td>De app vraagt om beelden van ongeveer 720p. Dat is scherp genoeg en blijft snel.</td></tr>
+              <tr><td><code>FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER</code></td><td>Kies de dichtstbijzijnde resolutie die het toestel wél ondersteunt.</td></tr>
+              <tr><td><code>KEEP_ONLY_LATEST</code></td><td>Als de verwerking achterloopt, gooi oude beelden weg. Je ziet altijd het nieuwste beeld.</td></tr>
+              <tr><td><code>RGBA_8888</code></td><td>Elke pixel komt binnen als rood, groen, blauw en alpha. Precies wat de verwerking nodig heeft.</td></tr>
+              <tr><td><code>analysisExecutor</code></td><td>Eén aparte achtergrondthread, zodat het scherm soepel blijft.</td></tr>
+              <tr><td><code>bindToLifecycle</code></td><td>De camera stopt automatisch als de app naar de achtergrond gaat.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Een frame ontvangen</h3>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">CameraController.kt · handleFrame()</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>private fun handleFrame(image: ImageProxy) {
+    try {
+        if (paused) return
+        val upright = image.toBitmap()
+        val rotation = image.imageInfo.rotationDegrees
+        val oriented = if (rotation != 0) rotate(upright, rotation) else upright
+
+        renderer.render(oriented, palette, threshold, stabilization) { bitmap -&gt;
+            onFrame?.invoke(bitmap)
+        }
+
+        if (oriented !== upright) oriented.recycle()
+        upright.recycle()
+    } catch (t: Throwable) {
+        // Eén mislukt frame mag de preview niet stoppen.
+    } finally {
+        image.close()
+    }
+}</code></pre>
+        </div>
+        <p>
+          Dit is de belangrijkste functie van de camera-laag. Elk frame wordt recht gedraaid,
+          door de renderer verwerkt en doorgegeven aan het scherm. Daarna worden de tijdelijke
+          Bitmaps opgeruimd met <code>recycle()</code>. Dat is belangrijk: een camera maakt
+          veel beelden, en zonder opruimen zou het geheugen snel vol raken.
+        </p>
+
+        <h3>Een echte foto maken</h3>
+        <p>
+          Voor "Vastzetten" en "Foto" gebruikt de app niet het laatste live-beeld, maar een
+          echte foto. Die heeft meer detail en is scherper. Het resultaat wordt daarna op
+          dezelfde manier verwerkt:
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">CameraController.kt · captureProcessed()</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>suspend fun captureProcessed(palette: Palette, threshold: Float): Bitmap {
+    val raw = takePicture()
+    return withContext(Dispatchers.Default) {
+        val width = raw.width
+        val height = raw.height
+        val pixels = IntArray(width * height)
+        raw.getPixels(pixels, 0, width, 0, 0, width, height)
+        FrameProcessor.process(pixels, width, height, palette, threshold)
+        val output = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888)
+        raw.recycle()
+        output
+    }
+}</code></pre>
+        </div>
+        <p>
+          De foto wordt eerst gedecodeerd en verkleind tot een lange zijde van maximaal
+          1600 pixels. Dat houdt het geheugengebruik en de verwerkingstijd behapbaar.
+          De EXIF-informatie van de foto vertelt hoe hij gedraaid moet worden; die stand
+          wordt netjes toegepast.
+        </p>
+
+        <div class="callout callout--tip">
+          <span class="callout__icon" aria-hidden="true">✓</span>
+          <div>
+            <p><strong>Waarom is een foto scherper dan het live-beeld?</strong> Live-beelden
+            worden klein en snel aangeleverd (ongeveer 1280 × 720). Een foto gebruikt de
+            volledige sensor, soms wel 4000 pixels breed. Daarna verkleint de app hem wel,
+            maar er blijft meer detail over. Bovendien staat het beeld stil, dus je ogen
+            hoeven niet meer te jagen op bewegende letters.</p>
+          </div>
+        </div>
+
+        <h3>Stabilisatie: drie lagen</h3>
+        <ol class="steps">
+          <li><strong>Optische stabilisatie (OIS).</strong><p>De lens beweegt mechanisch mee met je hand. Alleen op toestellen die dit hebben.</p></li>
+          <li><strong>Elektronische stabilisatie (EIS).</strong><p>De camera schuift het beeldsoftwarematig bij. Ook alleen als het toestel het ondersteunt.</p></li>
+          <li><strong>Softwarematige rust in de app.</strong><p>De app houdt bij beweging het laatste scherpe beeld even vast. Dit werkt altijd.</p></li>
+        </ol>
+        <p>
+          De eerste twee worden via <code>Camera2Interop</code> aangevraagd. De app controleert
+          eerst welke modi het toestel ondersteunt en vraagt alleen die aan. Lukt het niet,
+          dan gaat de app gewoon verder met de softwarematige stabilisatie.
+        </p>
+
+        <h3>De renderer: twee buffers en een korte pauze</h3>
+        <p>
+          <code>FrameRenderer</code> is een private klasse binnen <code>CameraController</code>.
+          Hij heeft drie taken:
+        </p>
+        <ul>
+          <li><strong>Twee Buffers:</strong> er zijn twee Bitmaps die om de beurt worden gebruikt. Het scherm leest de ene terwijl de camera de andere vult. Zo zie je nooit een half beeld.</li>
+          <li><strong>Beweging meten:</strong> de <code>FrameMotionDetector</code> bepaalt of het beeld rustig is.</li>
+          <li><strong>Beeld vasthouden:</strong> bij beweging wordt maximaal ongeveer vijf keer per seconde een nieuw beeld getoond in plaats van dertig keer.</li>
+        </ul>
+
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">CameraController.kt · FrameRenderer.render()</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>val motion = if (stabilization) {
+    motionDetector.update(scratch, width, height)
+} else {
+    0f
+}
+val now = System.nanoTime()
+val moving = stabilization &amp;&amp; motion &gt;= MOVING_SCORE
+
+if (moving &amp;&amp; lastFrameNanos != 0L &amp;&amp; now - lastFrameNanos &lt; HOLD_NANOS) {
+    return
+}
+
+val hysteresis = if (stabilization &amp;&amp; !moving) {
+    max(2f, threshold * 0.3f)
+} else {
+    0f
+}</code></pre>
+        </div>
+        <p>
+          <code>MOVING_SCORE</code> staat op 6 en <code>HOLD_NANOS</code> op 180 miljoen
+          nanoseconden, dus 0,18 seconde. Als het beeld beweegt en het vorige beeld is jonger
+          dan 0,18 seconde, wordt het nieuwe frame overgeslagen. Het scherm blijft dan heel
+          even staan. Zodra je stilhoudt, komen er weer meer beelden en wordt het beeld scherp.
+        </p>
+        <p>
+          Bij stilstand gebruikt de renderer <em>hysterese</em>: een pixel blijft bij zijn
+          vorige keuze tenzij het verschil duidelijk verandert. Daardoor flikkeren letters
+          niet tussen tekst en achtergrond. Hoofdstuk 8 legt dat uit.
+        </p>
+
+        <details class="deep">
+          <summary>Dieper: wat doet <code>@Volatile</code>?</summary>
+          <div>
+            <p>
+              De UI-thread en de camera-thread zijn twee verschillende werknemers. Als de UI
+              de kleur verandert, moet de camera-thread dat meteen zien. <code>@Volatile</code>
+              zegt tegen Kotlin: "haal deze waarde altijd vers uit het geheugen, gebruik geen
+              oude kopie". Zonder dat zou de camera-thread kunnen blijven werken met een
+              verouderde kleur of drempel.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="frame">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">08</span> De kern <span class="level level--3">Diepgang</span></p>
+          <h2>Het beeld filteren: van kleur naar contrast</h2>
+          <p class="chapter__intro">
+            Dit is het hart van de app. <code>FrameProcessor</code> bekijkt elke pixel en
+            beslist: is dit tekst of achtergrond? Daarna krijgt de pixel één van de twee
+            gekozen kleuren. Het bijzondere is dat de beslissing <em>lokaal</em> is: de app
+            vergelijkt een pixel met zijn directe omgeving, niet met het hele beeld.
+          </p>
+        </div>
+
+        <div class="callout callout--info">
+          <span class="callout__icon" aria-hidden="true">i</span>
+          <div>
+            <p><strong>De vergelijking met de klas.</strong> Stel je een klas leerlingen voor.
+            Een leerling die precies gemiddeld is, valt niet op. Een leerling die duidelijk
+            groter of kleiner is dan het gemiddelde van de klas, valt wél op. Zo werkt de
+            filter ook: een pixel die afwijkt van het gemiddelde van zijn buurtjes, is
+            "tekst". De rest is achtergrond.</p>
+          </div>
+        </div>
+
+        <h3>De vijf stappen</h3>
+        <ol class="steps">
+          <li><strong>Opdelen in blokken van 4 × 4 pixels.</strong><p>Voor elk blok wordt het gemiddelde van rood, groen, blauw en helderheid berekend. Rekenen per blok is veel sneller dan per pixel.</p></li>
+          <li><strong>Een integraalbeeld maken.</strong><p>Daarmee kan de app razendsnel het gemiddelde van een groot gebied berekenen, zonder alle pixels opnieuw langs te lopen.</p></li>
+          <li><strong>Per blok het gemiddelde van de omgeving nemen.</strong><p>De meetstraal is ongeveer 1,5% van de beeldbreedte. Dat is groot genoeg om letters te omvatten en klein genoeg om lokale verschillen te zien.</p></li>
+          <li><strong>Elke pixel vergelijken met dat lokale gemiddelde.</strong><p>Het verschil in helderheid en kleur bepaalt hoe "tekstig" de pixel is.</p></li>
+          <li><strong>Een drempel toepassen.</strong><p>Is het verschil groot genoeg? Dan tekstkleur, anders achtergrondkleur.</p></li>
+        </ol>
+
+        <h3>Stap 1: blokgemiddelden</h3>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">FrameProcessor.kt · blokken</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>private const val BLOCK = 4
+
+// Voor elke pixel:
+val lum = (r * 299 + g * 587 + b * 114) / 1000
+sumLum[block] += lum
+sumLumSquared[block] += lum * lum
+count[block]++
+
+// Na alle pixels: gemiddelde per blok
+sumLum[i] /= n
+sumLumSquared[i] /= n</code></pre>
+        </div>
+        <p>
+          De formule <code>(R × 299 + G × 587 + B × 114) / 1000</code> is de standaardmanier
+          om helderheid te berekenen. Groen telt het zwaarst, omdat het menselijk oog groen
+          het beste ziet. Zo wordt "helderheid" een getal tussen 0 (zwart) en 255 (wit).
+        </p>
+        <p>
+          De app bewaart ook het gemiddelde van het kwadraat van de helderheid. Dat getal
+          lijkt nutteloos, maar het is nodig om de <em>standaardafwijking</em> te berekenen:
+          een maat voor hoeveel contrast er lokaal is. Meer daarover in de diepere uitleg.
+        </p>
+
+        <h3>Stap 2: het integraalbeeld</h3>
+        <p>
+          Een integraalbeeld is een slimme optelsom. Stel je een rij getallen voor:
+          <code>3, 4, 2, 5</code>. Het integraalbeeld is <code>3, 7, 9, 14</code>:
+          steeds de som van alles tot dat punt.
+        </p>
+        <p>
+          Wil je de som van het tweede en derde getal (4 + 2 = 6)? Dan hoef je alleen
+          <code>9 − 3 = 6</code> te doen. Voor een rechthoek in een beeld werkt het met vier
+          hoekpunten: <em>rechtsonder − linksboven − rechtsboven + linksonder</em>. Zo kost
+          een groot gebied optellen evenveel moeite als een klein gebied.
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">FrameProcessor.kt · integraalbeeld</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>integralR[dst] = sumR[src] + integralR[dst - 1] +
+    integralR[dst - integralWidth] - integralR[dst - integralWidth - 1]</code></pre>
+        </div>
+
+        <details class="deep">
+          <summary>Dieper: waarom vier keer aftrekken en optellen?</summary>
+          <div>
+            <p>
+              Een integraalbeeld stapelt alle waarden vanaf linksboven. De waarde op een
+              punt is de som van de hele rechthoek daarboven. Wil je alleen een kleiner
+              rechthoekje weten, dan trek je de stroken erboven en links ervan af. Omdat je
+              één strook dubbel aftrekt, tel je die weer één keer op. Vandaar de formule
+              met vier termen.
+            </p>
+            <p>
+              Het voordeel: de rekentijd hangt niet af van de grootte van de meetstraal.
+              Of de app nu een gebied van 4 × 4 of 40 × 40 blokken bekijkt, het blijft vier
+              optellingen. Daardoor kan de app op een telefoon dertig beelden per seconde
+              verwerken.
+            </p>
+          </div>
+        </details>
+
+        <h3>Stap 3: het lokale gemiddelde</h3>
+        <p>
+          Voor elk blok wordt een vierkant gebied rondom dat blok opgeteld. De straal is
+          <code>0.015 × beeldbreedte</code>, met een minimum van één blok. Bij een beeld van
+          1280 pixels breed is dat ongeveer 19 pixels: ruim genoeg om een letter en wat
+          achtergrond te omvatten.
+        </p>
+        <p>
+          Tussen de blokken wordt vloeiend geïnterpoleerd. Zonder die interpolatie zou je
+          een patroon van vierkantjes kunnen zien. Met interpolatie lijkt het gemiddelde
+          één gladde ondergrond.
+        </p>
+
+        <h3>Stap 4: vergelijken</h3>
+        <p>
+          Nu komt de kern. Voor elke pixel berekent de app vier dingen:
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Meting</th><th>Formule in de code</th><th>Wat het betekent</th></tr></thead>
+            <tbody>
+              <tr><td>Helderheid</td><td><code>(R×299 + G×587 + B×114) / 1000</code></td><td>Hoe licht de pixel zelf is.</td></tr>
+              <tr><td>Helderheidsverschil</td><td><code>abs(luminance − localLuminance)</code></td><td>Hoeveel lichter of donkerder dan de omgeving.</td></tr>
+              <tr><td>Kleurverschil</td><td><code>max(abs(r−localR), abs(g−localG), abs(b−localB))</code></td><td>Hoeveel de kleur afwijkt, ook als de helderheid gelijk is.</td></tr>
+              <tr><td>Lokaal contrast</td><td><code>sqrt(variance)</code></td><td>Hoeveel variatie er in de omgeving zit.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Het uiteindelijke verschil is <code>max(helderheidsverschil, 0.6 × kleurverschil)</code>.
+          De kleurterm telt voor 60% mee. Waarom? Omdat zwarte letters op een rode verpakking
+          soms weinig verschil in helderheid hebben, maar wel veel verschil in kleur. Zonder
+          de kleurterm zouden die letters kunnen verdwijnen.
+        </p>
+
+        <h3>Stap 5: de drempel</h3>
+        <p>
+          De app gebruikt niet één vaste drempel voor het hele beeld. De drempel past zich aan
+          het lokale contrast aan:
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">FrameProcessor.kt · beslissing</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>val variance = max(0f, localSquared - localLuminance * localLuminance)
+val localContrast = sqrt(variance)
+val adaptiveThreshold = max(threshold, stdFactor * localContrast)
+
+val difference = max(luminanceDiff, chromaDiff * 0.6f)
+val isForeground = difference &gt;= effectiveThreshold
+pixels[index] = if (isForeground) foreground else background</code></pre>
+        </div>
+        <p>
+          In gewone taal: in een druk gebied met veel contrast moet een pixel extra hard
+          afwijken voordat hij tekst wordt. In een rustig gebied is een klein verschil al
+          genoeg. Daardoor blijven dunne letters gevuld, maar ontstaan er geen grote
+          samengesmolten vlekken.
+        </p>
+
+        <h3>Wat doet de gevoeligheidsschijf?</h3>
+        <p>
+          De schuif in de instellingen verandert de basisdrempel. De omzetting is:
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">ContrastlezerScreen.kt · gevoeligheid</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>private fun sensitivityToThreshold(sensitivity: Float): Float {
+    return 0.25f - 0.20f * sensitivity.coerceIn(0f, 1f)
+}
+
+// Daarna in het scherm:
+val threshold = sensitivityToThreshold(sensitivity) * 255f</code></pre>
+        </div>
+        <p>
+          Bij 0% is de drempel <code>0.25 × 255 ≈ 64</code>. Bij 100% is dat
+          <code>0.05 × 255 ≈ 13</code>. Een <strong>lagere</strong> drempel betekent dat
+          méér pixels als tekst worden gezien. Een hogere gevoeligheid maakt de tekst dus
+          voller, maar kan ook ruis of schaduw als tekst laten verschijnen.
+        </p>
+
+        <h3>Hysterese: waarom letters niet knipperen</h3>
+        <p>
+          Zonder extra truc zou een pixel op de grens bij elk frame kunnen omklappen:
+          tekst, achtergrond, tekst, achtergrond. Dat ziet er onrustig uit. Daarom onthoudt
+          de app de vorige keuze in een <em>masker</em>. Een pixel blijft bij zijn oude keuze
+          zolang het verschil niet duidelijk de andere kant op wijst.
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Vorige toestand</th><th>Nieuwe drempel</th><th>Gevolg</th></tr></thead>
+            <tbody>
+              <tr><td>Tekst</td><td><code>drempel − hysterese</code></td><td>Blijft tekst tot het verschil echt wegvalt.</td></tr>
+              <tr><td>Achtergrond</td><td><code>drempel + hysterese</code></td><td>Blijft achtergrond tot het verschil echt groot wordt.</td></tr>
+              <tr><td>Onbekend</td><td><code>drempel</code></td><td>Gewone beslissing.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Bij een drempel van 60 en een hysterese van 30: een pixel die al tekst was, blijft
+          tekst zolang het verschil minstens 30 is. Een pixel die achtergrond was, wordt pas
+          tekst bij een verschil van 90. Dat verschil van 60 tussen beide situaties voorkomt
+          geflikker.
+        </p>
+
+        <div class="callout callout--tip">
+          <span class="callout__icon" aria-hidden="true">✓</span>
+          <div>
+            <p><strong>Waarom dit zo goed werkt op verpakkingen:</strong> de kleur van de
+            verpakking verdwijnt, maar het <em>vormverschil</em> tussen letters en achtergrond
+            blijft. De app hoeft de letters niet te herkennen. Ze maakt alleen het verschil
+            zichtbaar met twee kleuren die jij goed kunt lezen.</p>
+          </div>
+        </div>
+
+        <details class="deep">
+          <summary>Dieper: standaardafwijking in één zin</summary>
+          <div>
+            <p>
+              De standaardafwijking zegt hoe ver getallen gemiddeld van hun gemiddelde
+              af liggen. De app berekent hem met
+              <code>√(gemiddelde van kwadraat − gemiddelde²)</code>. Dat is wiskundig
+              hetzelfde als de bekende formule, maar het kan met de blokgemiddelden die de
+              app al heeft. Zo kost het bijna geen extra tijd.
+            </p>
+            <p>
+              In een effen stuk achtergrond is de standaardafwijking bijna 0. Op een plek met
+              letters is hij groot. Daarom kan de drempel meeschalen: veel contrast vraagt om
+              een strengere grens.
+            </p>
+          </div>
+        </details>
+
+        <details class="deep">
+          <summary>Dieper: waarom de verwerking in pure Kotlin staat</summary>
+          <div>
+            <p>
+              <code>FrameProcessor</code> werkt alleen met een <code>IntArray</code>, breedte,
+              hoogte en een paar getallen. Er zit geen Android-klasse in. Daardoor kan de
+              testcode hem op een gewone computer uitvoeren, zonder telefoon of emulator.
+              Dat maakt de kern sneller te controleren en veiliger om aan te passen.
+            </p>
+            <p>
+              Ook presteert het goed: de app maakt geen nieuwe objecten per pixel aan, werkt
+              met primitieve getallen en hergebruikt de grote buffers. De verwerking gebeurt
+              op een achtergrondthread, dus het scherm blijft reageren.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="beweging">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">09</span> Stabiliteit <span class="level level--2">Gemiddeld</span></p>
+          <h2>Beweging meten</h2>
+          <p class="chapter__intro">
+            <code>FrameMotionDetector</code> beantwoordt één vraag: is het beeld sinds het
+            vorige frame veel veranderd? Het antwoord is een getal van 0 tot 255. De renderer
+            gebruikt dat getal om te beslissen of hij een nieuw beeld toont of het oude heel
+            even vasthoudt.
+          </p>
+        </div>
+
+        <h3>Hoe meten zonder veel rekenwerk?</h3>
+        <p>
+          De detector bekijkt niet alle pixels. Hij pakt een rooster: elke 8 pixels één
+          meting. Van die meting maakt hij een grijswaarde. Een beeld van 1280 × 720 heeft
+          dan ongeveer 160 × 90 = 14.400 metingen in plaats van 921.600 pixels. Dat is
+          ongeveer 64 keer minder werk.
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">FrameMotionDetector.kt · update()</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>var sumAbsolute = 0L
+var sumSigned = 0L
+for (i in 0 until size) {
+    val difference = current[i] - previous[i]
+    sumAbsolute += abs(difference)
+    sumSigned += difference
+}
+swapBuffers()
+
+// Trek de gemiddelde helderheidsverandering af.
+val movement = sumAbsolute - abs(sumSigned)
+return (movement.toFloat() / size).coerceIn(0f, 255f)</code></pre>
+        </div>
+        <p>
+          <code>sumAbsolute</code> telt alle verschillen op, ook als ze elkaar opheffen.
+          <code>sumSigned</code> telt de richting mee: als het hele beeld gewoon iets lichter
+          wordt, heffen plus en min elkaar op. Door <code>abs(sumSigned)</code> ervan af te
+          trekken, blijft alleen echte beweging over. Anders zou de camera die zich aanpast
+          aan het licht als "beweging" worden gezien.
+        </p>
+
+        <h3>Wat gebeurt er met de score?</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Score</th><th>Betekenis</th><th>Gedrag</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>Beeld is vrijwel identiek.</td><td>Elk frame wordt verwerkt; hysterese houdt pixels rustig.</td></tr>
+              <tr><td>1–5</td><td>Kleine verandering, bijvoorbeeld ruis.</td><td>Nog steeds als stil beschouwd.</td></tr>
+              <tr><td>6 of hoger</td><td>Duidelijke beweging.</td><td>Maximaal ongeveer 5 beelden per seconde; masker wordt leeggemaakt.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          Bij beweging wordt het masker met <code>−1</code> gevuld. Dat betekent "onbekend".
+          Zo blijven oude tekstvormen niet door het nieuwe beeld heen schijnen. Daarna bouwt
+          de hysterese rustig een nieuw masker op.
+        </p>
+
+        <div class="callout callout--info">
+          <span class="callout__icon" aria-hidden="true">i</span>
+          <div>
+            <p><strong>Stabilisatie is uit te zetten.</strong> In de instellingen staat een
+            schakelaar. Staat hij uit, dan wordt elk frame direct verwerkt en is er geen
+            hysterese. Dat kan handiger zijn als je juist snel wilt meebewegen met een
+            voorwerp.</p>
+          </div>
+        </div>
+
+        <h3>Waarom niet gewoon elk frame bevriezen?</h3>
+        <p>
+          Omdat je dan niet meer ziet wat je doet. De app kiest een middenweg: bij stilstand
+          zie je een vloeiend beeld, bij beweging houdt hij het laatste scherpe beeld heel
+          even vast. Zo blijft de tekst leesbaar zonder dat de camera "vastloopt".
+        </p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="kleuren">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">10</span> Kleuren <span class="level level--1">Makkelijk</span></p>
+          <h2>De zes hoog-contrastcombinaties</h2>
+          <p class="chapter__intro">
+            <code>Palettes.kt</code> is een van de kortste bestanden. Het beschrijft zes
+            paren van een voorgrondkleur en een achtergrondkleur. De volgorde in de lijst is
+            precies de volgorde van de knoppen in de app.
+          </p>
+        </div>
+
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">Palettes.kt</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>data class Palette(
+    val name: String,
+    val foreground: Int,
+    val background: Int,
+)
+
+val HighContrastPalettes: List&lt;Palette&gt; = listOf(
+    Palette("Zwart op wit", 0xFF000000.toInt(), 0xFFFFFFFF.toInt()),
+    Palette("Wit op zwart", 0xFFFFFFFF.toInt(), 0xFF000000.toInt()),
+    Palette("Geel op zwart", 0xFFFFD500.toInt(), 0xFF000000.toInt()),
+    Palette("Zwart op geel", 0xFF000000.toInt(), 0xFFFFD500.toInt()),
+    Palette("Blauw op wit", 0xFF0033CC.toInt(), 0xFFFFFFFF.toInt()),
+    Palette("Cyaan op zwart", 0xFF00E5FF.toInt(), 0xFF000000.toInt()),
+)</code></pre>
+        </div>
+
+        <h3>Zo zien ze eruit</h3>
+        <div class="swatches" aria-label="De zes kleurcombinaties als voorbeeld">
+          <span class="swatch" style="--sw-fg:#000000;--sw-bg:#ffffff" role="img" aria-label="Zwart op wit">Aa</span>
+          <span class="swatch" style="--sw-fg:#ffffff;--sw-bg:#000000" role="img" aria-label="Wit op zwart">Aa</span>
+          <span class="swatch" style="--sw-fg:#ffd500;--sw-bg:#000000" role="img" aria-label="Geel op zwart">Aa</span>
+          <span class="swatch" style="--sw-fg:#000000;--sw-bg:#ffd500" role="img" aria-label="Zwart op geel">Aa</span>
+          <span class="swatch" style="--sw-fg:#0033cc;--sw-bg:#ffffff" role="img" aria-label="Blauw op wit">Aa</span>
+          <span class="swatch" style="--sw-fg:#00e5ff;--sw-bg:#000000" role="img" aria-label="Cyaan op zwart">Aa</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Naam</th><th>Voorgrond</th><th>Achtergrond</th><th>Handig bij</th></tr></thead>
+            <tbody>
+              <tr><td>Zwart op wit</td><td><code>#000000</code></td><td><code>#FFFFFF</code></td><td>Veel licht, fijne tekst.</td></tr>
+              <tr><td>Wit op zwart</td><td><code>#FFFFFF</code></td><td><code>#000000</code></td><td>Donkere omgeving, minder licht in je ogen.</td></tr>
+              <tr><td>Geel op zwart</td><td><code>#FFD500</code></td><td><code>#000000</code></td><td>Sterk contrast dat veel mensen prettig vinden.</td></tr>
+              <tr><td>Zwart op geel</td><td><code>#000000</code></td><td><code>#FFD500</code></td><td>Duidelijk bij fel licht.</td></tr>
+              <tr><td>Blauw op wit</td><td><code>#0033CC</code></td><td><code>#FFFFFF</code></td><td>Rustiger dan zwart op wit.</td></tr>
+              <tr><td>Cyaan op zwart</td><td><code>#00E5FF</code></td><td><code>#000000</code></td><td>Opvallend en helder in het donker.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          De <code>0xFF</code> aan het begin is de alpha-waarde: volledig zichtbaar.
+          <code>.toInt()</code> is nodig omdat Kotlin getallen boven de 2 miljard anders als
+          een groter type ziet. Zonder die omzetting zou de compiler klagen.
+        </p>
+
+        <div class="callout callout--tip">
+          <span class="callout__icon" aria-hidden="true">✓</span>
+          <div>
+            <p><strong>Zelf een combinatie toevoegen?</strong> Dat is een van de makkelijkste
+            aanpassingen. Zet een nieuwe regel in de lijst, kies twee kleuren met veel
+            contrast en geef de combinatie een duidelijke Nederlandse naam. De knop verschijnt
+            automatisch. Zie hoofdstuk 14.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="opslaan">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">11</span> Galerij <span class="level level--1">Makkelijk</span></p>
+          <h2>Een foto opslaan</h2>
+          <p class="chapter__intro">
+            <code>GallerySaver.kt</code> schrijft het verwerkte beeld naar de galerij van
+            Android. De foto komt in <code>Afbeeldingen/Contrastlezer</code> te staan, met
+            een naam die begint met <code>contrastlezer_</code> en eindigt met datum en tijd.
+          </p>
+        </div>
+
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">GallerySaver.kt</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>val values = ContentValues().apply {
+    put(MediaStore.Images.Media.DISPLAY_NAME, name)
+    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+    put(
+        MediaStore.MediaColumns.RELATIVE_PATH,
+        Environment.DIRECTORY_PICTURES + "/Contrastlezer",
+    )
+    put(MediaStore.MediaColumns.IS_PENDING, 1)
+}
+
+val resolver = context.contentResolver
+val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+    ?: throw IOException("Kon geen galerij-item aanmaken")</code></pre>
+        </div>
+
+        <h3>Waarom "IS_PENDING"?</h3>
+        <p>
+          De app meldt eerst een nieuw bestand aan met de status "nog bezig". Daarna schrijft
+          hij de JPEG-gegevens. Pas als het schrijven gelukt is, zet hij de status op
+          "klaar". Zo kan de galerij geen half geschreven foto tonen. Gaat er iets mis, dan
+          verwijdert de app het mislukte item weer.
+        </p>
+
+        <div class="callout callout--info">
+          <span class="callout__icon" aria-hidden="true">i</span>
+          <div>
+            <p><strong>Geen opslagtoestemming nodig.</strong> Op Android 10 en nieuwer mag
+            een app via MediaStore een eigen foto toevoegen zonder toegang tot alle bestanden.
+            Contrastlezer richt zich op Android 13 of nieuwer, dus deze nette route is altijd
+            beschikbaar.</p>
+          </div>
+        </div>
+
+        <p>
+          De foto wordt opgeslagen als JPEG met kwaliteit 95. Dat is hoog: het bestand is
+          iets groter, maar de scherpe randen van de letters blijven goed bewaard. Omdat het
+          beeld al uit twee kleuren bestaat, valt de bestandsgrootte mee.
+        </p>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="thema">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">12</span> Vormgeving <span class="level level--1">Makkelijk</span></p>
+          <h2>Thema en vormgeving</h2>
+          <p class="chapter__intro">
+            De app zelf is donker, met gele accenten. Dat is geen toeval: een donker scherm
+            geeft minder licht in je ogen en laat het hoog-contrastbeeld beter uitkomen.
+            <code>Theme.kt</code> legt de kleuren en lettergroottes vast.
+          </p>
+        </div>
+
+        <h3>De belangrijkste kleuren</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Rol</th><th>Kleur</th><th>Waar gebruikt</th></tr></thead>
+            <tbody>
+              <tr><td><code>primary</code></td><td>Geel <code>#FFD500</code></td><td>Actieve knoppen, schuiven, accenten.</td></tr>
+              <tr><td><code>background</code></td><td>Zwart <code>#000000</code></td><td>Achtergrond van het scherm.</td></tr>
+              <tr><td><code>surface</code></td><td>Donkergrijs <code>#141414</code></td><td>Panelen en vlakken.</td></tr>
+              <tr><td><code>onBackground</code></td><td>Wit <code>#FFFFFF</code></td><td>Tekst op de achtergrond.</td></tr>
+              <tr><td><code>secondary</code></td><td>Lichtblauw <code>#9BE7FF</code></td><td>Extra accentkleur.</td></tr>
+              <tr><td><code>error</code></td><td>Zacht rood <code>#FF8A80</code></td><td>Foutmeldingen.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Grote letters</h3>
+        <p>
+          De standaardtekst is 18 sp met een regelhoogte van 26 sp. Titels zijn 26 sp en vet.
+          Dat is groter dan in veel apps. De knoppen hebben daarnaast een minimale breedte
+          en een groot rond raakvlak, zodat je niet precies hoeft te mikken.
+        </p>
+
+        <h3>Alle teksten op één plek</h3>
+        <p>
+          In <code>res/values/strings.xml</code> staan bijna alle Nederlandse zinnen. Het scherm
+          verwijst ernaar met bijvoorbeeld <code>stringResource(R.string.freeze)</code>.
+          Dat heeft twee voordelen: je kunt teksten aanpassen zonder de code te raken, en
+          de app kan later eenvoudig in een andere taal worden vertaald.
+        </p>
+
+        <div class="callout callout--tip">
+          <span class="callout__icon" aria-hidden="true">✓</span>
+          <div>
+            <p><strong>Toegankelijkheid is hier geen extraatje.</strong> De app is gemaakt
+            voor mensen die moeite hebben met lezen. Daarom zijn contrast, knopgrootte,
+            voorleeslabels en voorspelbare bediening belangrijker dan een fashionable ontwerp.
+            Houd dat in gedachten als je iets verandert.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="tests">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">13</span> Controle <span class="level level--2">Gemiddeld</span></p>
+          <h2>Tests: bewijs dat de rekenkern klopt</h2>
+          <p class="chapter__intro">
+            Een test is een klein programmaatje dat controleert of een stuk code het
+            verwachte resultaat geeft. Contrastlezer heeft drie testbestanden. Ze draaien
+            op een gewone computer, zonder telefoon of emulator, omdat de rekenkern pure
+            Kotlin is.
+          </p>
+        </div>
+
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">Terminal</span>
+            <span class="codebar__lang">Opdracht</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>./gradlew testDebugUnitTest</code></pre>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Testbestand</th><th>Wat het controleert</th></tr></thead>
+            <tbody>
+              <tr><td><code>FrameProcessorTest</code></td><td>Maakt een testkaart met tekst op gekleurde vlakken en schrijft het verwerkte resultaat als afbeelding weg.</td></tr>
+              <tr><td><code>FrameProcessorStabilityTest</code></td><td>Controleert dat hysterese pixels vasthoudt en dus flikkeren voorkomt.</td></tr>
+              <tr><td><code>FrameMotionDetectorTest</code></td><td>Controleert dat stilstand 0 oplevert, verschuiving beweging oplevert en een globale lichtverandering géén beweging is.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>De testkaart</h3>
+        <p>
+          <code>FrameProcessorTest</code> tekent met de computer een kaart met onder andere:
+        </p>
+        <ul>
+          <li>zwarte tekst op wit papier;</li>
+          <li>zwarte en witte letters op een rode verpakking;</li>
+          <li>zwarte tekst op groen;</li>
+          <li>witte letters op geel;</li>
+          <li>gele letters op blauw;</li>
+          <li>rode letters op donker;</li>
+          <li>een lange ingrediëntenlijst en zeer fijne print.</li>
+        </ul>
+        <p>
+          Daarna gaat de kaart door <code>FrameProcessor</code> met verschillende
+          contrastinstellingen. De uitkomsten komen in
+          <code>app/build/test-output/</code> te staan, bijvoorbeeld
+          <code>origineel.png</code> en <code>verwerkt_k11.png</code>. Zo kun je met eigen
+          ogen zien of dunne én dikke letters goed blijven.
+        </p>
+
+        <h3>Wat betekenen de cijfers in de testnamen?</h3>
+        <p>
+          De <code>k</code> staat voor de <code>stdFactor</code>: hoeveel de drempel
+          meeschaalt met het lokale contrast. In de test worden waarden als 0, 0,8, 1,1 en
+          1,5 gebruikt. Zo zie je meteen wat er gebeurt als je die instelling verandert.
+        </p>
+
+        <div class="callout callout--warn">
+          <span class="callout__icon" aria-hidden="true">!</span>
+          <div>
+            <p><strong>Een test is geen garantie voor een mooi beeld.</strong> De tests
+            controleren rekenkundige eigenschappen en bekende gevallen. Of tekst prettig leest,
+            blijft iets om met je eigen ogen en op echte verpakkingen te beoordelen.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="aanpassen">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">14</span> Zelf doen <span class="level level--2">Gemiddeld</span></p>
+          <h2>Zelf iets aanpassen</h2>
+          <p class="chapter__intro">
+            De beste manier om code te leren is een kleine, veilige verandering maken.
+            Hieronder staan recepten die weinig risico geven. Begin met een kleur of een
+            tekst; die kun je bijna niet stukmaken.
+          </p>
+        </div>
+
+        <div class="recipe">
+          <div class="recipe__head">
+            <h4>Recept 1 · Een kleurcombinatie toevoegen</h4>
+            <span class="pill pill--easy">Makkelijk</span>
+          </div>
+          <p>Open <code>image/Palettes.kt</code> en zet een regel in de lijst.</p>
+          <ol>
+            <li>Kies een voorgrondkleur en een achtergrondkleur met veel contrast.</li>
+            <li>Gebruik de vorm <code>0xFFRRGGBB.toInt()</code>.</li>
+            <li>Start de app opnieuw. De nieuwe knop staat automatisch in de rij.</li>
+          </ol>
+          <div class="codeblock codeblock--sm">
+            <div class="codebar">
+              <span class="codebar__file">Palettes.kt · nieuwe regel</span>
+              <span class="codebar__lang">Kotlin</span>
+              <button class="copy-btn" type="button">Kopieer</button>
+            </div>
+            <pre><code>Palette("Groen op zwart", 0xFF7CFF6B.toInt(), 0xFF000000.toInt()),</code></pre>
+          </div>
+        </div>
+
+        <div class="recipe">
+          <div class="recipe__head">
+            <h4>Recept 2 · De standaardgevoeligheid veranderen</h4>
+            <span class="pill pill--easy">Makkelijk</span>
+          </div>
+          <p>Zoek in <code>ContrastlezerScreen.kt</code> naar <code>sensitivity</code> en pas de beginwaarde aan.</p>
+          <div class="codeblock codeblock--sm">
+            <div class="codebar">
+              <span class="codebar__file">ContrastlezerScreen.kt</span>
+              <span class="codebar__lang">Kotlin</span>
+              <button class="copy-btn" type="button">Kopieer</button>
+            </div>
+            <pre><code>var sensitivity by rememberSaveable { mutableFloatStateOf(0.6f) }</code></pre>
+          </div>
+          <p>
+            <code>0.6f</code> betekent 60%. Een hogere waarde maakt letters voller, maar ook
+            gevoeliger voor ruis. De schuif blijft gewoon werken; je verandert alleen waar
+            hij begint.
+          </p>
+        </div>
+
+        <div class="recipe">
+          <div class="recipe__head">
+            <h4>Recept 3 · Een knoptekst veranderen</h4>
+            <span class="pill pill--easy">Makkelijk</span>
+          </div>
+          <p>Open <code>res/values/strings.xml</code> en pas de tekst tussen de tags aan.</p>
+          <div class="codeblock codeblock--sm">
+            <div class="codebar">
+              <span class="codebar__file">strings.xml</span>
+              <span class="codebar__lang">XML</span>
+              <button class="copy-btn" type="button">Kopieer</button>
+            </div>
+            <pre><code>&lt;string name="freeze"&gt;Vastzetten&lt;/string&gt;</code></pre>
+          </div>
+          <p>
+            Verander bijvoorbeeld <code>Vastzetten</code> in <code>Beeld stilzetten</code>.
+            De rest van de app gebruikt automatisch de nieuwe tekst.
+          </p>
+        </div>
+
+        <div class="recipe">
+          <div class="recipe__head">
+            <h4>Recept 4 · Foto's in hogere resolutie verwerken</h4>
+            <span class="pill pill--mid">Gemiddeld</span>
+          </div>
+          <p>In <code>CameraController.kt</code> staat de maximale lange zijde van foto's.</p>
+          <div class="codeblock codeblock--sm">
+            <div class="codebar">
+              <span class="codebar__file">CameraController.kt</span>
+              <span class="codebar__lang">Kotlin</span>
+              <button class="copy-btn" type="button">Kopieer</button>
+            </div>
+            <pre><code>const val MAX_EDGE = 1600</code></pre>
+          </div>
+          <p>
+            Maak er bijvoorbeeld <code>2048</code> van. De foto wordt scherper, maar de
+            verwerking duurt langer en gebruikt meer geheugen. Test dit op een oud toestel.
+          </p>
+        </div>
+
+        <div class="recipe">
+          <div class="recipe__head">
+            <h4>Recept 5 · De beeldstabilisatie rustiger of sneller maken</h4>
+            <span class="pill pill--mid">Gemiddeld</span>
+          </div>
+          <p>Deze twee getallen staan onderaan <code>CameraController.kt</code>.</p>
+          <div class="codeblock codeblock--sm">
+            <div class="codebar">
+              <span class="codebar__file">CameraController.kt · FrameRenderer</span>
+              <span class="codebar__lang">Kotlin</span>
+              <button class="copy-btn" type="button">Kopieer</button>
+            </div>
+            <pre><code>private const val MOVING_SCORE = 6f
+private const val HOLD_NANOS = 180_000_000L</code></pre>
+          </div>
+          <p>
+            <code>MOVING_SCORE</code> lager maken: eerder denken dat het beeld beweegt.
+            <code>HOLD_NANOS</code> hoger maken: het beeld langer vasthouden. Dat kan rustiger
+            lezen, maar ook trager aanvoelen.
+          </p>
+        </div>
+
+        <div class="recipe">
+          <div class="recipe__head">
+            <h4>Recept 6 · Een nieuwe knop toevoegen</h4>
+            <span class="pill pill--hard">Diepgang</span>
+          </div>
+          <p>Dit is een goede oefening, maar je raakt meer bestanden. Werk in deze volgorde:</p>
+          <ol>
+            <li>Zet de knoptekst in <code>strings.xml</code>.</li>
+            <li>Voeg in <code>ContrastlezerScreen.kt</code> een <code>ControlButton</code> toe aan de rij.</li>
+            <li>Bedenk welke state de knop verandert, bijvoorbeeld een nieuwe <code>var</code>.</li>
+            <li>Koppel die state met een <code>LaunchedEffect</code> aan de controller, als de camera iets moet doen.</li>
+            <li>Compileer, test op een toestel en controleer of de knop groot genoeg en voorleesbaar is.</li>
+          </ol>
+        </div>
+
+        <h3>Na elke wijziging</h3>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">Terminal · controleren</span>
+            <span class="codebar__lang">Opdracht</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code># 1. Draai de tests
+./gradlew testDebugUnitTest
+
+# 2. Bouw de app
+./gradlew assembleDebug
+
+# 3. Installeer op een aangesloten telefoon
+adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
+        </div>
+
+        <div class="callout callout--tip">
+          <span class="callout__icon" aria-hidden="true">✓</span>
+          <div>
+            <p><strong>Werk het liefst in een aparte branch.</strong> Maak bijvoorbeeld
+            <code>git switch -c mijn-kleur</code>, verander één ding, test het, en pas daarna
+            commit je. Zo kun je altijd terug naar de werkende versie.</p>
+          </div>
+        </div>
+
+        <div class="callout callout--warn">
+          <span class="callout__icon" aria-hidden="true">!</span>
+          <div>
+            <p><strong>Verander niet zomaar de drempelformule.</strong> De combinatie van
+            <code>threshold</code>, <code>stdFactor</code> en <code>hysteresis</code> is
+            zorgvuldig afgestemd. Begin met de gevoeligheid in de gebruikersinterface; die is
+            bedoeld om aan te passen. Wil je echt aan de formule sleutelen, gebruik dan de
+            testkaart om het effect te bekijken.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="begrippen">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">15</span> Naslag <span class="level level--1">Makkelijk</span></p>
+          <h2>Begrippenlijst</h2>
+          <p class="chapter__intro">
+            Kom je een woord tegen dat je niet kent? Zoek het hier op. De uitleg is bewust
+            kort en in gewone taal.
+          </p>
+        </div>
+
+        <dl class="terms">
+          <div class="term"><dt>Activity</dt><dd>Eén scherm in een Android-app. Contrastlezer heeft één Activity: <code>MainActivity</code>.</dd></div>
+          <div class="term"><dt>ARGB</dt><dd>De volgorde van kleurkanalen: Alpha (doorzichtigheid), Rood, Groen, Blauw. Elke waarde loopt van 00 tot FF.</dd></div>
+          <div class="term"><dt>Bitmap</dt><dd>Een beeld in het geheugen, opgebouwd uit een raster van pixels.</dd></div>
+          <div class="term"><dt>CameraX</dt><dd>Android-bibliotheek die het gebruik van de camera eenvoudiger maakt.</dd></div>
+          <div class="term"><dt>Composable</dt><dd>Een functie in Jetpack Compose die een stukje van het scherm beschrijft.</dd></div>
+          <div class="term"><dt>Compose</dt><dd>De moderne manier van Android om schermen te bouwen met Kotlin-functies.</dd></div>
+          <div class="term"><dt>Coroutine</dt><dd>Code die ergens op mag wachten zonder het hele scherm te blokkeren. Je start er een met <code>launch</code>; een functie die mag wachten heet <code>suspend</code>.</dd></div>
+          <div class="term"><dt>Drempel</dt><dd>De grens waarboven iets als tekst telt. Een lage drempel geeft meer tekst, een hoge drempel minder.</dd></div>
+          <div class="term"><dt>EXIF</dt><dd>Extra informatie in een fotobestand, bijvoorbeeld hoe de foto gedraaid moet worden.</dd></div>
+          <div class="term"><dt>Frame</dt><dd>Eén beeld uit een reeks camerabeelden. Dertig frames per seconde voelt als vloeiende video.</dd></div>
+          <div class="term"><dt>Gradle</dt><dd>Het bouwgereedschap dat de app compileert, test en verpakt.</dd></div>
+          <div class="term"><dt>Hysterese</dt><dd>Een pixel vasthouden bij zijn vorige keuze tot het verschil duidelijk verandert. Voorkomt flikkeren.</dd></div>
+          <div class="term"><dt>Integraalbeeld</dt><dd>Een optelsom van alle waarden tot een punt. Maakt snelle gemiddelden van rechthoeken mogelijk.</dd></div>
+          <div class="term"><dt>Kotlin</dt><dd>De programmeertaal waarin de app is geschreven. Draait op de Java Virtual Machine.</dd></div>
+          <div class="term"><dt>MediaStore</dt><dd>De nette Android-manier om foto's aan de galerij toe te voegen.</dd></div>
+          <div class="term"><dt>OCR</dt><dd>Optical Character Recognition: letters herkennen en omzetten naar tekst. Contrastlezer doet dit bewust niet.</dd></div>
+          <div class="term"><dt>Pixel</dt><dd>Eén klein puntje van een beeld, met een eigen kleur.</dd></div>
+          <div class="term"><dt>RGBA</dt><dd>Rood, Groen, Blauw en Alpha. Dezelfde informatie als ARGB, maar in een andere volgorde.</dd></div>
+          <div class="term"><dt>State</dt><dd>Gegevens die het scherm moet onthouden, zoals de gekozen kleur of de zoomstand.</dd></div>
+          <div class="term"><dt>Standaardafwijking</dt><dd>Een maat voor hoeveel waarden van hun gemiddelde afwijken. De app gebruikt het als maat voor lokaal contrast.</dd></div>
+          <div class="term"><dt>Thread</dt><dd>Een aparte werkstroom. Zo kan de camera rekenen terwijl het scherm blijft reageren.</dd></div>
+          <div class="term"><dt>Unit test</dt><dd>Een kleine automatische controle van één stukje code, zonder telefoon of emulator.</dd></div>
+          <div class="term"><dt>Volatile</dt><dd>Een eigenschap in Kotlin die tussen threads altijd vers wordt gelezen.</dd></div>
+          <div class="term"><dt>Zoomratio</dt><dd>Hoeveel keer de camera is vergroot. 1× is normaal, 2× is twee keer zo dichtbij.</dd></div>
+        </dl>
+      </section>
+
+      <!-- ================================================================ -->
+      <section class="chapter" id="vragen">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">16</span> Hulp <span class="level level--1">Makkelijk</span></p>
+          <h2>Veelgestelde vragen</h2>
+          <p class="chapter__intro">
+            De vragen die het vaakst opkomen, met een kort antwoord.
+          </p>
+        </div>
+
+        <div class="faq">
+          <details>
+            <summary>Waarom gebruikt de app maar twee kleuren?</summary>
+            <div class="faq__body">
+              <p>Omdat kleurverschil vaak de boosdoener is. Zwarte letters op een rode verpakking hebben weinig verschil in helderheid, maar wel in kleur. Door alles naar twee kleuren terug te brengen, blijft alleen het vormverschil over. Dat is precies wat je ogen nodig hebben om letters te herkennen.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Leest de app de tekst voor?</summary>
+            <div class="faq__body">
+              <p>Nee. Er zit geen tekstherkenning in. De app verandert alleen het beeld. Dat is sneller, werkt met elke taal en elk lettertype, en verstuurt niets.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Wordt mijn camerabeeld ergens naartoe gestuurd?</summary>
+            <div class="faq__body">
+              <p>Nee. De app heeft geen internettoegang. Alle verwerking gebeurt op je toestel. Alleen foto's die je zelf met de knop "Foto" opslaat, komen in je galerij terecht.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Waarom is het beeld even stil als ik beweeg?</summary>
+            <div class="faq__body">
+              <p>Dat is de softwarematige stabilisatie. Bij beweging houdt de app het laatste scherpe beeld heel even vast, zodat letters niet bij elk frame verspringen. Zodra je stilhoudt, komt het beeld weer vloeiend terug. Je kunt dit uitzetten in de instellingen.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Waarom is een vastgezet beeld scherper dan het live-beeld?</summary>
+            <div class="faq__body">
+              <p>"Vastzetten" maakt een echte foto met de volledige camerasensor. Die foto heeft meer detail dan de kleine live-beelden. Daarna wordt hij verwerkt en stilgezet. Je ogen hoeven dan niet meer een bewegend beeld te volgen.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Waarom werkt de app pas vanaf Android 13?</summary>
+            <div class="faq__body">
+              <p>De app gebruikt moderne Android-onderdelen en de nieuwste CameraX. Door Android 13 als minimum te kiezen, kan de code schoner blijven en hoeft er geen rekening te worden gehouden met oude toestellen. Op dit moment is dat de bewuste keuze van het project.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Kan ik de app in het donker gebruiken?</summary>
+            <div class="faq__body">
+              <p>Ja. Zet de zaklamp aan via de instellingen, als je toestel een flitser heeft. Kies daarnaast bijvoorbeeld geel op zwart of wit op zwart, zodat het scherm niet te veel licht geeft.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Waar staan mijn opgeslagen foto's?</summary>
+            <div class="faq__body">
+              <p>In de galerij, in de map <code>Afbeeldingen/Contrastlezer</code>. De bestandsnaam begint met <code>contrastlezer_</code>, gevolgd door datum en tijd.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Ik wil de code aanpassen. Waar begin ik?</summary>
+            <div class="faq__body">
+              <p>Begin met een kleur in <code>Palettes.kt</code> of een tekst in <code>strings.xml</code>. Dat zijn kleine, veilige wijzigingen. Lees daarna hoofdstuk 14 voor de volledige recepten en draai altijd de tests voordat je iets deelt.</p>
+            </div>
+          </details>
+
+          <details>
+            <summary>Hoe bouw ik de app zelf?</summary>
+            <div class="faq__body">
+              <p>Je hebt Java 17 of nieuwer en de Android SDK nodig. Draai <code>./gradlew assembleDebug</code>. Het resultaat staat in <code>app/build/outputs/apk/debug/app-debug.apk</code>. Met <code>adb install -r</code> zet je hem op een aangesloten telefoon.</p>
+            </div>
+          </details>
+        </div>
+
+        <div class="callout callout--info">
+          <span class="callout__icon" aria-hidden="true">i</span>
+          <div>
+            <p><strong>Iets niet gevonden?</strong> Zoek met <kbd>/</kbd> in de inhoudsopgave,
+            of bekijk de broncode en de README op
+            <a href="https://github.com/simondewaal1980/contrastlezer" target="_blank" rel="noopener noreferrer">GitHub</a>.
+            Daar staat altijd de nieuwste versie.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="shell footer__inner">
+      <p>
+        <strong>Codeboek Contrastlezer</strong> · geschreven voor beginners · bijgewerkt november 2026
+      </p>
+      <div class="footer__links">
+        <a href="#top">Terug naar boven</a>
+        <a href="https://github.com/simondewaal1980/contrastlezer" target="_blank" rel="noopener noreferrer">GitHub-repository</a>
+        <a href="https://github.com/simondewaal1980/contrastlezer/blob/main/README.md" target="_blank" rel="noopener noreferrer">README</a>
+        <a href="https://github.com/simondewaal1980/contrastlezer/issues" target="_blank" rel="noopener noreferrer">Melding maken</a>
+      </div>
+    </div>
+  </footer>
+
+  <button class="to-top" id="to-top" type="button" aria-label="Terug naar boven">↑</button>
+
+  <script src="script.js"></script>
+</body>
+</html>
