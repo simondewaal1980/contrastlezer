@@ -36,6 +36,7 @@ import androidx.compose.material.icons.rounded.AcUnit
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cameraswitch
 import androidx.compose.material.icons.rounded.FlashOn
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Remove
@@ -166,6 +167,7 @@ private fun CameraContent() {
     var stabilization by rememberSaveable { mutableStateOf(true) }
     var hardwareStabilization by remember { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
+    var showAbout by rememberSaveable { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
     var liveFrame by remember { mutableStateOf<LiveFrame?>(null) }
 
@@ -411,6 +413,7 @@ private fun CameraContent() {
                         }
                         torchOn = false
                     },
+                    onOpenAbout = { showAbout = true },
                 )
                 Spacer(Modifier.height(8.dp))
             }
@@ -507,6 +510,10 @@ private fun CameraContent() {
                     },
                 )
             }
+        }
+
+        if (showAbout) {
+            AboutScreen(onClose = { showAbout = false })
         }
     }
 }
@@ -795,6 +802,7 @@ private fun SettingsPanel(
     torchOn: Boolean,
     onTorch: () -> Unit,
     onSwitchCamera: () -> Unit,
+    onOpenAbout: () -> Unit,
 ) {
     Surface(
         color = Color(0xE61A1A1A),
@@ -894,6 +902,15 @@ private fun SettingsPanel(
                     modifier = Modifier.weight(1f),
                 )
             }
+
+            Spacer(Modifier.height(10.dp))
+
+            WideButton(
+                icon = Icons.Rounded.Info,
+                label = stringResource(R.string.about),
+                onClick = onOpenAbout,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

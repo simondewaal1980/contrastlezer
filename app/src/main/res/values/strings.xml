@@ -15,6 +15,15 @@
     <string name="ocr_empty">Geen tekst gevonden. Richt de camera op tekst en zet opnieuw vast.</string>
     <string name="ocr_failed">Tekst herkennen is mislukt</string>
     <string name="close">Sluiten</string>
+    <string name="about">Over</string>
+    <string name="about_version">Versie %1$s</string>
+    <string name="about_version_unknown">Versie onbekend</string>
+    <string name="about_description">Contrastlezer maakt tekst op je camera scherp en leesbaar met hoog contrast. Je kunt het beeld vastzetten, de tekst laten herkennen en in het Nederlands laten voorlezen.</string>
+    <string name="about_privacy_title">Privacy</string>
+    <string name="about_privacy">Alle verwerking gebeurt op je toestel. De app heeft geen internettoegang en verstuurt geen beelden of tekst.</string>
+    <string name="about_tech_title">Techniek</string>
+    <string name="about_tech">Gebouwd met Kotlin, Jetpack Compose, CameraX en ML Kit. Het codeboek legt de werking in gewone taal uit.</string>
+    <string name="about_codebook">Codeboek op GitHub</string>
     <string name="speak">Lees voor</string>
     <string name="stop_speaking">Stop</string>
     <string name="tts_failed">Voorlezen is niet beschikbaar. Installeer een Nederlandse tekst-naar-spraak-stem via de instellingen van je toestel.</string>

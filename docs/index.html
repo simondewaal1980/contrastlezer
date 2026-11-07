@@ -144,7 +144,7 @@
 
       <div class="sidebar__foot">
         <p><strong>Tip:</strong> druk op <kbd>/</kbd> om te zoeken.</p>
-        <p>Dit codeboek hoort bij Contrastlezer 1.0.</p>
+        <p>Dit codeboek hoort bij Contrastlezer 0.02 Alpha.</p>
       </div>
     </aside>
 
@@ -488,6 +488,7 @@
 │       │   │   │   ├── SpeechReader.kt
 │       │   │   │   └── SpeechTextSplitter.kt
 │       │   │   └── ui/
+│       │   │       ├── AboutScreen.kt
 │       │   │       ├── ContrastlezerScreen.kt
 │       │   │       ├── TextResultSheet.kt
 │       │   │       └── Theme.kt
@@ -514,7 +515,8 @@
             </thead>
             <tbody>
               <tr><td><code>MainActivity.kt</code></td><td>Start de app en zet het eerste scherm aan.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>26</td></tr>
-              <tr><td><code>ui/ContrastlezerScreen.kt</code></td><td>Alle knoppen, het camerabeeld, de instellingen, het vastgezette beeld en de tekstherkenning.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>1034</td></tr>
+              <tr><td><code>ui/ContrastlezerScreen.kt</code></td><td>Alle knoppen, het camerabeeld, de instellingen, het vastgezette beeld en de tekstherkenning.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>1054</td></tr>
+              <tr><td><code>ui/AboutScreen.kt</code></td><td>Het "Over"-scherm met versienummer, privacy en een link naar het codeboek.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>216</td></tr>
               <tr><td><code>ui/TextResultSheet.kt</code></td><td>Het grote tekstscherm met de herkende tekst en de knoppen om voor te lezen of te sluiten.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>161</td></tr>
               <tr><td><code>camera/CameraController.kt</code></td><td>Start de camera, verwerkt live beelden, maakt foto's en regelt stabilisatie.</td><td><span class="pill pill--hard">Diepgang</span></td><td>478</td></tr>
               <tr><td><code>ocr/TextScanner.kt</code></td><td>Herkent tekst op een foto met ML Kit.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>44</td></tr>
@@ -526,7 +528,7 @@
               <tr><td><code>image/Palettes.kt</code></td><td>De lijst met zes hoog-contrastkleuren.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>21</td></tr>
               <tr><td><code>image/GallerySaver.kt</code></td><td>Schrijft een verwerkte foto naar de galerij.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>47</td></tr>
               <tr><td><code>ui/Theme.kt</code></td><td>Kleuren en lettergroottes van de app zelf.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>54</td></tr>
-              <tr><td><code>res/values/strings.xml</code></td><td>Alle Nederlandse teksten op één plek.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>45</td></tr>
+              <tr><td><code>res/values/strings.xml</code></td><td>Alle Nederlandse teksten op één plek.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>54</td></tr>
               <tr><td><code>AndroidManifest.xml</code></td><td>Vraagt cameratoegang en legt vast dat de app staand is.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>36</td></tr>
               <tr><td><code>app/build.gradle.kts</code></td><td>Kiest Android-versies en bibliotheken, waaronder ML Kit.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>76</td></tr>
               <tr><td><code>gradle/libs.versions.toml</code></td><td>Zet de versies van Compose, CameraX, ML Kit en Kotlin bij elkaar.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>34</td></tr>
@@ -782,7 +784,7 @@ var showSettings by rememberSaveable { mutableStateOf(false) }</code></pre>
           <div class="card">
             <span class="card__icon" aria-hidden="true">⚙</span>
             <h4>Instellingen</h4>
-            <p>Opent het paneel met gevoeligheid, zoom, stabilisatie, automatisch voorlezen, zaklamp en camerawissel.</p>
+            <p>Opent het paneel met gevoeligheid, zoom, stabilisatie, automatisch voorlezen, zaklamp, camerawissel en Over.</p>
           </div>
         </div>
 
