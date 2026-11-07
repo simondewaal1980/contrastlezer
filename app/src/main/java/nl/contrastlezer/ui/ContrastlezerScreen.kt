@@ -96,6 +96,7 @@ import nl.contrastlezer.camera.CapturedPhoto
 import nl.contrastlezer.image.GallerySaver
 import nl.contrastlezer.image.HighContrastPalettes
 import nl.contrastlezer.image.Palette
+import nl.contrastlezer.ocr.SpeechReader
 import nl.contrastlezer.ocr.TextScanner
 import java.util.Locale
 import kotlin.math.max
@@ -160,6 +161,8 @@ private fun CameraContent() {
     var busy by remember { mutableStateOf(false) }
     var scanning by remember { mutableStateOf(false) }
     var scannedText by remember { mutableStateOf<String?>(null) }
+    var speech by remember { mutableStateOf<SpeechReader?>(null) }
+    var autoSpeak by rememberSaveable { mutableStateOf(false) }
     var stabilization by rememberSaveable { mutableStateOf(true) }
     var hardwareStabilization by remember { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
@@ -177,6 +180,7 @@ private fun CameraContent() {
     val saveFailedMessage = stringResource(R.string.save_failed)
     val noTextMessage = stringResource(R.string.ocr_empty)
     val ocrFailedMessage = stringResource(R.string.ocr_failed)
+    val ttsFailedMessage = stringResource(R.string.tts_failed)
 
     DisposableEffect(controller) {
         controller.onFrame = { bitmap ->
@@ -190,6 +194,10 @@ private fun CameraContent() {
 
     DisposableEffect(textScanner) {
         onDispose { textScanner.close() }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { speech?.close() }
     }
 
     LaunchedEffect(notice) {
@@ -223,6 +231,14 @@ private fun CameraContent() {
     LaunchedEffect(stabilization) { controller.stabilization = stabilization }
     LaunchedEffect(frozen) { controller.paused = frozen != null }
 
+    fun ensureSpeechReader(): SpeechReader {
+        speech?.let { return it }
+        val reader = SpeechReader(context)
+        reader.onError = { notice = ttsFailedMessage }
+        speech = reader
+        return reader
+    }
+
     fun snap(onResult: (CapturedPhoto) -> Unit) {
         if (busy) return
         scope.launch {
@@ -253,7 +269,9 @@ private fun CameraContent() {
                 if (text.isBlank()) {
                     notice = noTextMessage
                 } else {
+                    val reader = ensureSpeechReader()
                     scannedText = text
+                    if (autoSpeak) reader.speak(text)
                 }
             } catch (t: Throwable) {
                 notice = ocrFailedMessage
@@ -380,6 +398,8 @@ private fun CameraContent() {
                     stabilization = stabilization,
                     onStabilization = { stabilization = it },
                     hardwareStabilization = hardwareStabilization,
+                    autoSpeak = autoSpeak,
+                    onAutoSpeak = { autoSpeak = it },
                     hasFlash = hasFlash,
                     torchOn = torchOn,
                     onTorch = { torchOn = !torchOn },
@@ -475,11 +495,18 @@ private fun CameraContent() {
         }
 
         scannedText?.let { text ->
-            TextResultSheet(
-                text = text,
-                palette = palette,
-                onClose = { scannedText = null },
-            )
+            val reader = speech
+            if (reader != null) {
+                TextResultSheet(
+                    text = text,
+                    palette = palette,
+                    speech = reader,
+                    onClose = {
+                        reader.stop()
+                        scannedText = null
+                    },
+                )
+            }
         }
     }
 }
@@ -759,6 +786,8 @@ private fun SettingsPanel(
     stabilization: Boolean,
     onStabilization: (Boolean) -> Unit,
     hardwareStabilization: Boolean,
+    autoSpeak: Boolean,
+    onAutoSpeak: (Boolean) -> Unit,
     hasFlash: Boolean,
     torchOn: Boolean,
     onTorch: () -> Unit,
@@ -798,6 +827,29 @@ private fun SettingsPanel(
                     text = stringResource(R.string.hardware_stabilization),
                     color = Color(0xFF9CCC65),
                     fontSize = 12.sp,
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.auto_speak),
+                        color = Color.White,
+                        fontSize = 15.sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.auto_speak_description),
+                        color = Color(0xFFBDBDBD),
+                        fontSize = 12.sp,
+                    )
+                }
+                Switch(
+                    checked = autoSpeak,
+                    onCheckedChange = onAutoSpeak,
+                    modifier = Modifier.padding(start = 12.dp),
                 )
             }
 
