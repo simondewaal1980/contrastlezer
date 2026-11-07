@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Contrastlezer</string>
+
+    <string name="permission_title">Cameratoegang nodig</string>
+    <string name="permission_body">Contrastlezer gebruikt de camera om tekst live om te zetten naar goed leesbare kleuren en deze te vergroten. Beelden blijven op je toestel; er wordt niets verstuurd.</string>
+    <string name="permission_button">Cameratoegang geven</string>
+    <string name="permission_denied">Zonder cameratoegang kan de app niet werken. Je kunt de toestemming aanzetten via Instellingen → Apps → Contrastlezer → Machtigingen.</string>
+
+    <string name="freeze">Bevries</string>
+    <string name="resume">Hervat</string>
+    <string name="photo">Foto</string>
+    <string name="torch">Lamp</string>
+    <string name="switch_camera">Wissel</string>
+    <string name="settings">Instellingen</string>
+    <string name="sensitivity">Gevoeligheid</string>
+    <string name="zoom">Vergroting</string>
+    <string name="zoom_value">%1$s×</string>
+    <string name="palette">Kleuren</string>
+
+    <string name="frozen_content_description">Bevroren beeld. Knijp om te vergroten.</string>
+    <string name="frozen_hint">Bevroren · knijp om te vergroten</string>
+    <string name="preview_content_description">Live camerabeeld met hoog contrast</string>
+
+    <string name="saved">Foto opgeslagen in Afbeeldingen/Contrastlezer</string>
+    <string name="save_failed">Opslaan van de foto is mislukt</string>
+    <string name="capture_failed">Vastleggen van beeld is mislukt</string>
+    <string name="camera_failed">Camera kon niet worden gestart</string>
+    <string name="busy">Even geduld…</string>
+</resources>

@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+app/build/
+.gradle-cache/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+*.hprof
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Lokaal SDK-pad
+local.properties
+
+# Kotlin
+.kotlin/
+
+# Overig
+.DS_Store
+*.log
