@@ -7,7 +7,7 @@
     <string name="permission_button">Cameratoegang geven</string>
     <string name="permission_denied">Zonder cameratoegang kan de app niet werken. Je kunt de toestemming aanzetten via Instellingen → Apps → Contrastlezer → Machtigingen.</string>
 
-    <string name="freeze">Bevries</string>
+    <string name="freeze">Vastzetten</string>
     <string name="resume">Hervat</string>
     <string name="photo">Foto</string>
     <string name="torch">Lamp</string>
@@ -16,10 +16,15 @@
     <string name="sensitivity">Gevoeligheid</string>
     <string name="zoom">Vergroting</string>
     <string name="zoom_value">%1$s×</string>
+    <string name="zoom_in">Vergroten</string>
+    <string name="zoom_out">Verkleinen</string>
     <string name="palette">Kleuren</string>
+    <string name="stabilization">Stabilisatie</string>
+    <string name="stabilization_description">Houdt het beeld rustig bij beweging</string>
+    <string name="hardware_stabilization">Beeldstabilisatie van de camera is actief</string>
 
-    <string name="frozen_content_description">Bevroren beeld. Knijp om te vergroten.</string>
-    <string name="frozen_hint">Bevroren · knijp om te vergroten</string>
+    <string name="frozen_content_description">Vastgezet beeld. Sleep om te verschuiven en gebruik de knoppen om te vergroten.</string>
+    <string name="frozen_hint">Vastgezet · sleep om te verschuiven, + en − om te vergroten</string>
     <string name="preview_content_description">Live camerabeeld met hoog contrast</string>
 
     <string name="saved">Foto opgeslagen in Afbeeldingen/Contrastlezer</string>

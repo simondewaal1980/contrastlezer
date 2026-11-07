@@ -27,15 +27,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AcUnit
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Cameraswitch
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Button
@@ -44,6 +47,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -69,7 +73,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -149,6 +155,8 @@ private fun CameraContent() {
     var maxZoomRatio by remember { mutableFloatStateOf(1f) }
     var frozen by remember { mutableStateOf<Bitmap?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var stabilization by rememberSaveable { mutableStateOf(true) }
+    var hardwareStabilization by remember { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
     var liveFrame by remember { mutableStateOf<LiveFrame?>(null) }
@@ -157,6 +165,10 @@ private fun CameraContent() {
 
     val palette = HighContrastPalettes[paletteIndex]
     val threshold = sensitivityToThreshold(sensitivity) * 255f
+    val cameraFailedMessage = stringResource(R.string.camera_failed)
+    val captureFailedMessage = stringResource(R.string.capture_failed)
+    val savedMessage = stringResource(R.string.saved)
+    val saveFailedMessage = stringResource(R.string.save_failed)
 
     DisposableEffect(controller) {
         controller.onFrame = { bitmap ->
@@ -179,13 +191,14 @@ private fun CameraContent() {
         try {
             val info = controller.start(lifecycleOwner, lensFacing)
             hasFlash = info.hasFlash
+            hardwareStabilization = info.hardwareStabilization
             maxZoomRatio = info.maxZoomRatio
             zoom = zoom.coerceIn(1f, max(info.maxZoomRatio, 1f))
             if (torchOn && !info.hasFlash) torchOn = false
             controller.setZoom(zoom)
             controller.setTorch(torchOn && info.hasFlash)
         } catch (t: Throwable) {
-            notice = context.getString(R.string.camera_failed)
+            notice = cameraFailedMessage
         }
     }
 
@@ -195,6 +208,7 @@ private fun CameraContent() {
         controller.palette = palette
         controller.threshold = threshold
     }
+    LaunchedEffect(stabilization) { controller.stabilization = stabilization }
     LaunchedEffect(frozen) { controller.paused = frozen != null }
 
     fun snap(onResult: (Bitmap) -> Unit) {
@@ -205,7 +219,7 @@ private fun CameraContent() {
                 val bitmap = controller.captureProcessed(palette, threshold)
                 onResult(bitmap)
             } catch (t: Throwable) {
-                notice = context.getString(R.string.capture_failed)
+                notice = captureFailedMessage
             } finally {
                 busy = false
             }
@@ -326,6 +340,20 @@ private fun CameraContent() {
                     zoom = zoom,
                     onZoom = { zoom = it },
                     maxZoom = maxZoomRatio,
+                    stabilization = stabilization,
+                    onStabilization = { stabilization = it },
+                    hardwareStabilization = hardwareStabilization,
+                    hasFlash = hasFlash,
+                    torchOn = torchOn,
+                    onTorch = { torchOn = !torchOn },
+                    onSwitchCamera = {
+                        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
+                            CameraSelector.LENS_FACING_FRONT
+                        } else {
+                            CameraSelector.LENS_FACING_BACK
+                        }
+                        torchOn = false
+                    },
                 )
                 Spacer(Modifier.height(8.dp))
             }
@@ -346,14 +374,17 @@ private fun CameraContent() {
                     icon = if (frozen != null) Icons.Rounded.PlayArrow else Icons.Rounded.AcUnit,
                     label = stringResource(if (frozen != null) R.string.resume else R.string.freeze),
                     active = frozen != null,
+                    enabled = !busy,
                     onClick = {
-                        val current = frozen
-                        if (current != null) {
+                        if (frozen != null) {
                             frozen = null
                         } else {
-                            liveFrame?.let { frozen = it.bitmap.copy(Bitmap.Config.ARGB_8888, false) }
+                            // Een echte foto geeft een scherper en rustiger
+                            // beeld dan het laatste live-frame.
+                            snap { bitmap -> frozen = bitmap }
                         }
                     },
+                    modifier = Modifier.weight(1f),
                 )
                 ControlButton(
                     icon = Icons.Rounded.PhotoCamera,
@@ -367,9 +398,9 @@ private fun CameraContent() {
                                     withContext(Dispatchers.IO) {
                                         GallerySaver.save(context, frozenImage)
                                     }
-                                    notice = context.getString(R.string.saved)
+                                    notice = savedMessage
                                 } catch (t: Throwable) {
-                                    notice = context.getString(R.string.save_failed)
+                                    notice = saveFailedMessage
                                 }
                             }
                         } else {
@@ -379,40 +410,22 @@ private fun CameraContent() {
                                         withContext(Dispatchers.IO) {
                                             GallerySaver.save(context, bitmap)
                                         }
-                                        notice = context.getString(R.string.saved)
+                                        notice = savedMessage
                                     } catch (t: Throwable) {
-                                        notice = context.getString(R.string.save_failed)
+                                        notice = saveFailedMessage
                                     }
                                 }
                             }
                         }
                     },
-                )
-                if (hasFlash) {
-                    ControlButton(
-                        icon = Icons.Rounded.FlashOn,
-                        label = stringResource(R.string.torch),
-                        active = torchOn,
-                        onClick = { torchOn = !torchOn },
-                    )
-                }
-                ControlButton(
-                    icon = Icons.Rounded.Cameraswitch,
-                    label = stringResource(R.string.switch_camera),
-                    onClick = {
-                        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) {
-                            CameraSelector.LENS_FACING_FRONT
-                        } else {
-                            CameraSelector.LENS_FACING_BACK
-                        }
-                        torchOn = false
-                    },
+                    modifier = Modifier.weight(1f),
                 )
                 ControlButton(
                     icon = Icons.Rounded.Tune,
                     label = stringResource(R.string.settings),
                     active = showSettings,
                     onClick = { showSettings = !showSettings },
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
@@ -429,6 +442,14 @@ private fun FrozenOverlay(image: Bitmap) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            .pointerInput(image) {
+                detectTapGestures(
+                    onDoubleTap = {
+                        scale = 1f
+                        offset = Offset.Zero
+                    },
+                )
+            }
             .pointerInput(image) {
                 detectTransformGestures { _, pan, zoomChange, _ ->
                     val newScale = (scale * zoomChange).coerceIn(1f, 8f)
@@ -451,6 +472,19 @@ private fun FrozenOverlay(image: Bitmap) {
                 },
         )
 
+        FrozenZoomControls(
+            scale = scale,
+            onZoomIn = { scale = (scale * 1.5f).coerceAtMost(8f) },
+            onZoomOut = {
+                val newScale = (scale / 1.5f).coerceAtLeast(1f)
+                scale = newScale
+                if (newScale <= 1f) offset = Offset.Zero
+            },
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 10.dp),
+        )
+
         Surface(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -466,6 +500,59 @@ private fun FrozenOverlay(image: Bitmap) {
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
             )
         }
+    }
+}
+
+/** Grote knoppen zodat vergroten ook zonder knijpgebaar lukt. */
+@Composable
+private fun FrozenZoomControls(
+    scale: Float,
+    onZoomIn: () -> Unit,
+    onZoomOut: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        ZoomButton(
+            icon = Icons.Rounded.Add,
+            description = stringResource(R.string.zoom_in),
+            enabled = scale < 7.99f,
+            onClick = onZoomIn,
+        )
+        ZoomButton(
+            icon = Icons.Rounded.Remove,
+            description = stringResource(R.string.zoom_out),
+            enabled = scale > 1.01f,
+            onClick = onZoomOut,
+        )
+    }
+}
+
+@Composable
+private fun ZoomButton(
+    icon: ImageVector,
+    description: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(60.dp)
+            .clip(CircleShape)
+            .background(if (enabled) Color(0xDD1F1F1F) else Color(0x881F1F1F))
+            .border(1.dp, Color(0x66FFFFFF), CircleShape)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (enabled) Color.White else Color(0xFF777777),
+            modifier = Modifier.size(32.dp),
+        )
     }
 }
 
@@ -543,7 +630,7 @@ private fun PaletteRow(selectedIndex: Int, onSelect: (Int) -> Unit) {
 private fun PaletteChip(palette: Palette, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(46.dp)
+            .size(48.dp)
             .clip(RoundedCornerShape(12.dp))
             .background(Color(palette.background))
             .border(
@@ -551,9 +638,10 @@ private fun PaletteChip(palette: Palette, selected: Boolean, onClick: () -> Unit
                 color = if (selected) Color(0xFFFFD500) else Color(0x66FFFFFF),
                 shape = RoundedCornerShape(12.dp),
             )
-            .clickable(onClick = onClick)
+            .clickable(role = Role.Button, onClick = onClick)
             .semantics {
                 contentDescription = palette.name
+                this.selected = selected
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -570,21 +658,23 @@ private fun PaletteChip(palette: Palette, selected: Boolean, onClick: () -> Unit
 private fun ControlButton(
     icon: ImageVector,
     label: String,
+    modifier: Modifier = Modifier,
     active: Boolean = false,
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(74.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable(enabled = enabled, onClick = onClick)
+        modifier = modifier
+            .widthIn(min = 88.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = label }
             .padding(vertical = 4.dp),
     ) {
         Box(
             modifier = Modifier
-                .size(56.dp)
+                .size(68.dp)
                 .clip(CircleShape)
                 .background(if (active) Color(0xFFFFD500) else Color(0xCC1F1F1F))
                 .border(1.dp, Color(0x44FFFFFF), CircleShape),
@@ -594,14 +684,14 @@ private fun ControlButton(
                 imageVector = icon,
                 contentDescription = null,
                 tint = if (active) Color.Black else Color.White,
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(32.dp),
             )
         }
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(5.dp))
         Text(
             text = label,
             color = if (enabled) Color(0xFFEDEDED) else Color(0xFF777777),
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             maxLines = 1,
         )
     }
@@ -614,6 +704,13 @@ private fun SettingsPanel(
     zoom: Float,
     onZoom: (Float) -> Unit,
     maxZoom: Float,
+    stabilization: Boolean,
+    onStabilization: (Boolean) -> Unit,
+    hardwareStabilization: Boolean,
+    hasFlash: Boolean,
+    torchOn: Boolean,
+    onTorch: () -> Unit,
+    onSwitchCamera: () -> Unit,
 ) {
     Surface(
         color = Color(0xE61A1A1A),
@@ -621,6 +718,37 @@ private fun SettingsPanel(
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.stabilization),
+                        color = Color.White,
+                        fontSize = 15.sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.stabilization_description),
+                        color = Color(0xFFBDBDBD),
+                        fontSize = 12.sp,
+                    )
+                }
+                Switch(
+                    checked = stabilization,
+                    onCheckedChange = onStabilization,
+                    modifier = Modifier.padding(start = 12.dp),
+                )
+            }
+
+            if (hardwareStabilization) {
+                Text(
+                    text = stringResource(R.string.hardware_stabilization),
+                    color = Color(0xFF9CCC65),
+                    fontSize = 12.sp,
+                )
+            }
+
             SliderRow(
                 label = stringResource(R.string.sensitivity),
                 valueText = "${(sensitivity * 100).roundToInt()}%",
@@ -628,19 +756,128 @@ private fun SettingsPanel(
                 onValueChange = onSensitivity,
                 range = 0f..1f,
             )
+
             if (maxZoom > 1.05f) {
-                SliderRow(
-                    label = stringResource(R.string.zoom),
-                    valueText = stringResource(
-                        R.string.zoom_value,
-                        String.format(Locale.US, "%.1f", zoom),
-                    ),
-                    value = zoom,
-                    onValueChange = onZoom,
-                    range = 1f..min(maxZoom, 10f),
+                ZoomRow(
+                    zoom = zoom,
+                    onZoom = onZoom,
+                    maxZoom = maxZoom,
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                if (hasFlash) {
+                    WideButton(
+                        icon = Icons.Rounded.FlashOn,
+                        label = stringResource(R.string.torch),
+                        active = torchOn,
+                        onClick = onTorch,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                WideButton(
+                    icon = Icons.Rounded.Cameraswitch,
+                    label = stringResource(R.string.switch_camera),
+                    onClick = onSwitchCamera,
+                    modifier = Modifier.weight(1f),
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ZoomRow(
+    zoom: Float,
+    onZoom: (Float) -> Unit,
+    maxZoom: Float,
+) {
+    val upper = min(maxZoom, 10f)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.zoom),
+            color = Color.White,
+            fontSize = 15.sp,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = stringResource(
+                R.string.zoom_value,
+                String.format(Locale.US, "%.1f", zoom),
+            ),
+            color = Color(0xFFFFD500),
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        ZoomButton(
+            icon = Icons.Rounded.Remove,
+            description = stringResource(R.string.zoom_out),
+            enabled = zoom > 1.01f,
+            onClick = { onZoom((zoom - ZOOM_STEP).coerceAtLeast(1f)) },
+        )
+        Slider(
+            value = zoom,
+            onValueChange = onZoom,
+            valueRange = 1f..upper,
+            modifier = Modifier
+                .weight(1f)
+                .height(48.dp),
+        )
+        ZoomButton(
+            icon = Icons.Rounded.Add,
+            description = stringResource(R.string.zoom_in),
+            enabled = zoom < upper - 0.01f,
+            onClick = { onZoom((zoom + ZOOM_STEP).coerceAtMost(upper)) },
+        )
+    }
+}
+
+/** Brede knop met icoon en tekst, voor minder vaak gebruikte functies. */
+@Composable
+private fun WideButton(
+    icon: ImageVector,
+    label: String,
+    modifier: Modifier = Modifier,
+    active: Boolean = false,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = modifier
+            .height(60.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(if (active) Color(0xFFFFD500) else Color(0xCC1F1F1F))
+            .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape(16.dp))
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = label },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = if (active) Color.Black else Color.White,
+            modifier = Modifier.size(28.dp),
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = label,
+            color = if (active) Color.Black else Color(0xFFEDEDED),
+            fontSize = 15.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
     }
 }
 
@@ -678,6 +915,9 @@ private fun SliderRow(
             .height(34.dp),
     )
 }
+
+/** Stapgrootte van de vergroot- en verkleinknoppen. */
+private const val ZOOM_STEP = 0.5f
 
 /** Hogere gevoeligheid betekent een lagere drempel (0..1). */
 private fun sensitivityToThreshold(sensitivity: Float): Float {
