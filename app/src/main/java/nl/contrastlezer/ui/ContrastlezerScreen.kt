@@ -91,6 +91,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nl.contrastlezer.R
 import nl.contrastlezer.camera.CameraController
+import nl.contrastlezer.camera.CapturedPhoto
 import nl.contrastlezer.image.GallerySaver
 import nl.contrastlezer.image.HighContrastPalettes
 import nl.contrastlezer.image.Palette
@@ -153,7 +154,7 @@ private fun CameraContent() {
     var torchOn by remember { mutableStateOf(false) }
     var hasFlash by remember { mutableStateOf(false) }
     var maxZoomRatio by remember { mutableFloatStateOf(1f) }
-    var frozen by remember { mutableStateOf<Bitmap?>(null) }
+    var frozen by remember { mutableStateOf<CapturedPhoto?>(null) }
     var busy by remember { mutableStateOf(false) }
     var stabilization by rememberSaveable { mutableStateOf(true) }
     var hardwareStabilization by remember { mutableStateOf(false) }
@@ -211,13 +212,13 @@ private fun CameraContent() {
     LaunchedEffect(stabilization) { controller.stabilization = stabilization }
     LaunchedEffect(frozen) { controller.paused = frozen != null }
 
-    fun snap(onResult: (Bitmap) -> Unit) {
+    fun snap(onResult: (CapturedPhoto) -> Unit) {
         if (busy) return
         scope.launch {
             busy = true
             try {
-                val bitmap = controller.captureProcessed(palette, threshold)
-                onResult(bitmap)
+                val photo = controller.capturePhoto(palette, threshold)
+                onResult(photo)
             } catch (t: Throwable) {
                 notice = captureFailedMessage
             } finally {
@@ -260,8 +261,8 @@ private fun CameraContent() {
                 },
         )
 
-        frozen?.let { image ->
-            FrozenOverlay(image)
+        frozen?.let { photo ->
+            FrozenOverlay(photo.processed)
         }
 
         notice?.let { message ->
@@ -381,7 +382,7 @@ private fun CameraContent() {
                         } else {
                             // Een echte foto geeft een scherper en rustiger
                             // beeld dan het laatste live-frame.
-                            snap { bitmap -> frozen = bitmap }
+                            snap { photo -> frozen = photo }
                         }
                     },
                     modifier = Modifier.weight(1f),
@@ -391,12 +392,12 @@ private fun CameraContent() {
                     label = stringResource(R.string.photo),
                     enabled = !busy,
                     onClick = {
-                        val frozenImage = frozen
-                        if (frozenImage != null) {
+                        val frozenPhoto = frozen
+                        if (frozenPhoto != null) {
                             scope.launch {
                                 try {
                                     withContext(Dispatchers.IO) {
-                                        GallerySaver.save(context, frozenImage)
+                                        GallerySaver.save(context, frozenPhoto.processed)
                                     }
                                     notice = savedMessage
                                 } catch (t: Throwable) {
@@ -404,11 +405,11 @@ private fun CameraContent() {
                                 }
                             }
                         } else {
-                            snap { bitmap ->
+                            snap { photo ->
                                 scope.launch {
                                     try {
                                         withContext(Dispatchers.IO) {
-                                            GallerySaver.save(context, bitmap)
+                                            GallerySaver.save(context, photo.processed)
                                         }
                                         notice = savedMessage
                                     } catch (t: Throwable) {

@@ -46,6 +46,16 @@ data class CameraStartInfo(
 )
 
 /**
+ * Een vastgezette foto: [original] is het gedecodeerde camerabeeld zonder
+ * bewerking (voor tekstherkenning) en [processed] is hetzelfde beeld in
+ * hoog contrast (voor weergave en opslaan).
+ */
+class CapturedPhoto(
+    val original: Bitmap,
+    val processed: Bitmap,
+)
+
+/**
  * Beheert de camera en de live beeldverwerking.
  *
  * De camera levert RGBA-frames via ImageAnalysis. Elk frame wordt op een
@@ -240,10 +250,11 @@ class CameraController(private val context: Context) {
     }
 
     /**
-     * Maakt een foto en zet die om naar de gekozen hoog-contrast kleuren.
-     * Het resultaat is verkleind tot [MAX_EDGE] pixels.
+     * Maakt een foto. Het originele beeld blijft bewaard voor tekstherkenning
+     * (OCR); het hoog-contrast-beeld is voor weergave en opslaan.
+     * Beide zijn verkleind tot [MAX_EDGE] pixels.
      */
-    suspend fun captureProcessed(palette: Palette, threshold: Float): Bitmap {
+    suspend fun capturePhoto(palette: Palette, threshold: Float): CapturedPhoto {
         val raw = takePicture()
         return withContext(Dispatchers.Default) {
             val width = raw.width
@@ -252,8 +263,7 @@ class CameraController(private val context: Context) {
             raw.getPixels(pixels, 0, width, 0, 0, width, height)
             FrameProcessor.process(pixels, width, height, palette, threshold)
             val output = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888)
-            raw.recycle()
-            output
+            CapturedPhoto(original = raw, processed = output)
         }
     }
 
