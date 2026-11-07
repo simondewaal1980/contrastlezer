@@ -655,6 +655,7 @@ private fun PermissionScreen(denied: Boolean, onRequest: () -> Unit) {
         Text(
             text = stringResource(R.string.permission_title),
             style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+            color = Color.White,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(12.dp))
@@ -663,6 +664,7 @@ private fun PermissionScreen(denied: Boolean, onRequest: () -> Unit) {
                 if (denied) R.string.permission_denied else R.string.permission_body,
             ),
             style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+            color = Color(0xFFF2F2F2),
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(28.dp))
@@ -679,6 +681,7 @@ private fun PermissionScreen(denied: Boolean, onRequest: () -> Unit) {
         ) {
             Text(
                 text = stringResource(R.string.permission_button),
+                color = Color.Black,
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
             )

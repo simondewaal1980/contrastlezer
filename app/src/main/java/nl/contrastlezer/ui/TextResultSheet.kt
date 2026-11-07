@@ -150,11 +150,15 @@ private fun LargeSheetButton(
         Icon(
             imageVector = icon,
             contentDescription = null,
+            tint = background,
             modifier = Modifier.size(28.dp),
         )
         Spacer(Modifier.width(8.dp))
         Text(
             text = label,
+            // Expliciet, want de tekststijl van het thema heeft een eigen kleur
+            // die anders de contentColor van de knop overschrijft.
+            color = background,
             fontSize = 20.sp,
         )
     }
