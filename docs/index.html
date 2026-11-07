@@ -134,6 +134,7 @@
         <li><a href="#beweging">Beweging meten</a></li>
         <li><a href="#kleuren">Kleuren</a></li>
         <li><a href="#opslaan">Foto opslaan</a></li>
+        <li><a href="#ocr">Tekst herkennen (OCR)</a></li>
         <li><a href="#thema">Thema en vormgeving</a></li>
         <li><a href="#tests">Tests</a></li>
         <li><a href="#aanpassen">Zelf aanpassen</a></li>
@@ -184,7 +185,7 @@
           <div class="card">
             <span class="card__icon" aria-hidden="true">3</span>
             <h4>Pas iets kleins aan</h4>
-            <p>Hoofdstuk 14 heeft kant-en-klare recepten, bijvoorbeeld een nieuwe kleurcombinatie toevoegen.</p>
+            <p>Hoofdstuk 15 heeft kant-en-klare recepten, bijvoorbeeld een nieuwe kleurcombinatie toevoegen.</p>
           </div>
         </div>
 
@@ -250,7 +251,7 @@
           </li>
           <li>
             <strong>Je zet het beeld vast of maakt een foto.</strong>
-            <p>Vastzetten maakt een scherpe foto en zet die stil. Daarna kun je rustig lezen en opslaan.</p>
+            <p>Vastzetten maakt een scherpe foto en zet die stil. Daarna kun je rustig lezen, de tekst laten herkennen en opslaan.</p>
           </li>
         </ol>
 
@@ -281,6 +282,11 @@
             <h4>Foto bewaren</h4>
             <p>Het verwerkte beeld gaat naar <code>Afbeeldingen/Contrastlezer</code> in je galerij.</p>
           </div>
+          <div class="card card--accent">
+            <span class="card__icon" aria-hidden="true">Aa</span>
+            <h4>Tekst herkennen en voorlezen</h4>
+            <p>Zet het beeld vast en druk op <strong>Tekst</strong>. De app toont de herkende tekst in groot contrast en kan die in het Nederlands voorlezen.</p>
+          </div>
           <div class="card">
             <span class="card__icon" aria-hidden="true">≈</span>
             <h4>Rustig beeld</h4>
@@ -300,10 +306,10 @@
 
         <h3>Wat de app níet doet</h3>
         <p>
-          Contrastlezer is <strong>geen tekstherkenner</strong> (geen OCR). De app leest de
-          letters niet voor en maakt geen tekstbestand. Ze verandert alleen kleuren, zodat
-          <em>jij</em> de tekst met je eigen ogen kunt lezen. Dat is expres: het werkt met
-          elke taal, elk lettertype en elk handschrift, en het is snel en privé.
+          Contrastlezer <strong>vertaalt of beoordeelt</strong> de tekst niet. De
+          tekstherkenning zet letters om naar tekst op je scherm en kan die voorlezen;
+          de app begrijpt de inhoud niet en slaat niets op. Ook verstuurt ze niets:
+          de herkenning en het voorlezen gebeuren volledig op je toestel.
         </p>
 
         <div class="callout callout--warn">
@@ -322,9 +328,9 @@
           <p class="eyebrow"><span class="eyebrow__num">03</span> Samenhang <span class="level level--1">Makkelijk</span></p>
           <h2>De grote lijn</h2>
           <p class="chapter__intro">
-            De app bestaat uit drie lagen: het scherm, de camera en de beeldbewerking.
-            Elke laag weet zo weinig mogelijk van de andere. Daardoor kun je één laag
-            aanpassen of testen zonder meteen alles te breken.
+            De app bestaat uit vier lagen: het scherm, de camera, de beeldbewerking en de
+            tekstherkenning. Elke laag weet zo weinig mogelijk van de andere. Daardoor kun je
+            één laag aanpassen of testen zonder meteen alles te breken.
           </p>
         </div>
 
@@ -360,7 +366,7 @@
           </div>
         </div>
 
-        <h3>De drie lagen</h3>
+        <h3>De vier lagen</h3>
         <div class="cards">
           <div class="card">
             <span class="card__icon" aria-hidden="true">▤</span>
@@ -376,6 +382,11 @@
             <span class="card__icon" aria-hidden="true">Aa</span>
             <h4>Beeld · <code>image/</code></h4>
             <p>De rekenkern: pixels vergelijken, kleuren kiezen, beweging meten en foto's opslaan.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">🔎</span>
+            <h4>Tekst · <code>ocr/</code></h4>
+            <p>Herkent letters met ML Kit en leest de tekst voor met de tekst-naar-spraak-engine. Alles op het toestel.</p>
           </div>
         </div>
 
@@ -416,7 +427,7 @@
           <div>
             <p><strong>Waarom deze verdeling?</strong> De beeldbewerking is pure Kotlin zonder
             Android-klassen. Daardoor kan dezelfde code op een gewone computer worden getest,
-            zonder telefoon of emulator. Dat zie je terug in hoofdstuk 13.</p>
+            zonder telefoon of emulator. Dat zie je terug in hoofdstuk 14.</p>
           </div>
         </div>
 
@@ -471,15 +482,25 @@
 │       │   │   │   ├── FrameMotionDetector.kt
 │       │   │   │   ├── GallerySaver.kt
 │       │   │   │   └── Palettes.kt
+│       │   │   ├── ocr/
+│       │   │   │   ├── TextScanner.kt
+│       │   │   │   ├── OcrTextCleaner.kt
+│       │   │   │   ├── SpeechReader.kt
+│       │   │   │   └── SpeechTextSplitter.kt
 │       │   │   └── ui/
 │       │   │       ├── ContrastlezerScreen.kt
+│       │   │       ├── TextResultSheet.kt
 │       │   │       └── Theme.kt
 │       │   └── res/
 │       │       └── values/       ← teksten, kleuren, thema
-│       └── test/java/nl/contrastlezer/image/
-│           ├── FrameProcessorTest.kt
-│           ├── FrameProcessorStabilityTest.kt
-│           └── FrameMotionDetectorTest.kt
+│       └── test/java/nl/contrastlezer/
+│           ├── image/
+│           │   ├── FrameProcessorTest.kt
+│           │   ├── FrameProcessorStabilityTest.kt
+│           │   └── FrameMotionDetectorTest.kt
+│           └── ocr/
+│               ├── OcrTextCleanerTest.kt
+│               └── SpeechTextSplitterTest.kt
 ├── gradle/libs.versions.toml     ← versies van bibliotheken
 ├── settings.gradle.kts
 └── README.md</code></pre>
@@ -493,18 +514,23 @@
             </thead>
             <tbody>
               <tr><td><code>MainActivity.kt</code></td><td>Start de app en zet het eerste scherm aan.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>26</td></tr>
-              <tr><td><code>ui/ContrastlezerScreen.kt</code></td><td>Alle knoppen, het camerabeeld, de instellingen en het vastgezette beeld.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>930</td></tr>
-              <tr><td><code>camera/CameraController.kt</code></td><td>Start de camera, verwerkt live beelden, maakt foto's en regelt stabilisatie.</td><td><span class="pill pill--hard">Diepgang</span></td><td>468</td></tr>
+              <tr><td><code>ui/ContrastlezerScreen.kt</code></td><td>Alle knoppen, het camerabeeld, de instellingen, het vastgezette beeld en de tekstherkenning.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>1034</td></tr>
+              <tr><td><code>ui/TextResultSheet.kt</code></td><td>Het grote tekstscherm met de herkende tekst en de knoppen om voor te lezen of te sluiten.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>161</td></tr>
+              <tr><td><code>camera/CameraController.kt</code></td><td>Start de camera, verwerkt live beelden, maakt foto's en regelt stabilisatie.</td><td><span class="pill pill--hard">Diepgang</span></td><td>478</td></tr>
+              <tr><td><code>ocr/TextScanner.kt</code></td><td>Herkent tekst op een foto met ML Kit.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>44</td></tr>
+              <tr><td><code>ocr/OcrTextCleaner.kt</code></td><td>Haalt overtollige spaties en lege regels uit de herkende tekst.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>30</td></tr>
+              <tr><td><code>ocr/SpeechReader.kt</code></td><td>Leest tekst voor met de tekst-naar-spraak-engine van Android.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>108</td></tr>
+              <tr><td><code>ocr/SpeechTextSplitter.kt</code></td><td>Knipt lange tekst in stukken die de spraak-engine aankan.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>46</td></tr>
               <tr><td><code>image/FrameProcessor.kt</code></td><td>De rekenkern die elke pixel tekst of achtergrond maakt.</td><td><span class="pill pill--hard">Diepgang</span></td><td>238</td></tr>
               <tr><td><code>image/FrameMotionDetector.kt</code></td><td>Meet hoeveel het beeld sinds het vorige frame is veranderd.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>89</td></tr>
               <tr><td><code>image/Palettes.kt</code></td><td>De lijst met zes hoog-contrastkleuren.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>21</td></tr>
               <tr><td><code>image/GallerySaver.kt</code></td><td>Schrijft een verwerkte foto naar de galerij.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>47</td></tr>
               <tr><td><code>ui/Theme.kt</code></td><td>Kleuren en lettergroottes van de app zelf.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>54</td></tr>
-              <tr><td><code>res/values/strings.xml</code></td><td>Alle Nederlandse teksten op één plek.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>35</td></tr>
+              <tr><td><code>res/values/strings.xml</code></td><td>Alle Nederlandse teksten op één plek.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>45</td></tr>
               <tr><td><code>AndroidManifest.xml</code></td><td>Vraagt cameratoegang en legt vast dat de app staand is.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>36</td></tr>
-              <tr><td><code>app/build.gradle.kts</code></td><td>Kiest Android-versies en bibliotheken.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>71</td></tr>
-              <tr><td><code>gradle/libs.versions.toml</code></td><td>Zet de versies van Compose, CameraX en Kotlin bij elkaar.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>32</td></tr>
-              <tr><td><code>src/test/…</code></td><td>Drie testbestanden die de rekenkern controleren.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>243</td></tr>
+              <tr><td><code>app/build.gradle.kts</code></td><td>Kiest Android-versies en bibliotheken, waaronder ML Kit.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>76</td></tr>
+              <tr><td><code>gradle/libs.versions.toml</code></td><td>Zet de versies van Compose, CameraX, ML Kit en Kotlin bij elkaar.</td><td><span class="pill pill--easy">Makkelijk</span></td><td>34</td></tr>
+              <tr><td><code>src/test/…</code></td><td>Vijf testbestanden die de rekenkern en de teksthulpjes controleren.</td><td><span class="pill pill--mid">Gemiddeld</span></td><td>331</td></tr>
             </tbody>
           </table>
         </div>
@@ -516,6 +542,7 @@
           <li><strong>ContrastlezerScreen.kt</strong><p>Het grootste bestand, maar je hoeft niet alles tegelijk te lezen. Zoek de functie die je interessant vindt.</p></li>
           <li><strong>CameraController.kt</strong><p>Volg één frame: van <code>handleFrame</code> naar <code>renderer.render</code>.</p></li>
           <li><strong>FrameProcessor.kt</strong><p>De kern. Lees eerst de grote stappen, dan de formules.</p></li>
+          <li><strong>ocr/</strong><p>Vier kleine bestanden: tekst herkennen, tekst opruimen, lange tekst splitsen en voorlezen.</p></li>
           <li><strong>De kleine bestanden</strong><p>Palettes, GallerySaver en Theme zijn kort en snel te begrijpen.</p></li>
         </ol>
 
@@ -735,12 +762,17 @@ var showSettings by rememberSaveable { mutableStateOf(false) }</code></pre>
           </div>
         </div>
 
-        <h3>Stap 4: de drie grote knoppen</h3>
+        <h3>Stap 4: de vier grote knoppen</h3>
         <div class="cards">
           <div class="card">
             <span class="card__icon" aria-hidden="true">❄</span>
             <h4>Vastzetten / Hervat</h4>
             <p>Maakt een echte foto, verwerkt die en zet het resultaat stil. Nog een keer drukken hervat het live-beeld.</p>
+          </div>
+          <div class="card">
+            <span class="card__icon" aria-hidden="true">Aa</span>
+            <h4>Tekst</h4>
+            <p>Herkent de tekst in het vastgezette beeld en opent het grote tekstscherm. Kan daarna worden voorgelezen.</p>
           </div>
           <div class="card">
             <span class="card__icon" aria-hidden="true">◉</span>
@@ -750,7 +782,7 @@ var showSettings by rememberSaveable { mutableStateOf(false) }</code></pre>
           <div class="card">
             <span class="card__icon" aria-hidden="true">⚙</span>
             <h4>Instellingen</h4>
-            <p>Opent het paneel met gevoeligheid, zoom, stabilisatie, zaklamp en camerawissel.</p>
+            <p>Opent het paneel met gevoeligheid, zoom, stabilisatie, automatisch voorlezen, zaklamp en camerawissel.</p>
           </div>
         </div>
 
@@ -761,13 +793,13 @@ var showSettings by rememberSaveable { mutableStateOf(false) }</code></pre>
             <span class="codebar__lang">Kotlin</span>
             <button class="copy-btn" type="button">Kopieer</button>
           </div>
-          <pre><code>fun snap(onResult: (Bitmap) -&gt; Unit) {
+          <pre><code>fun snap(onResult: (CapturedPhoto) -&gt; Unit) {
     if (busy) return
     scope.launch {
         busy = true
         try {
-            val bitmap = controller.captureProcessed(palette, threshold)
-            onResult(bitmap)
+            val photo = controller.capturePhoto(palette, threshold)
+            onResult(photo)
         } catch (t: Throwable) {
             notice = captureFailedMessage
         } finally {
@@ -945,11 +977,11 @@ val boundCamera = provider.bindToLifecycle(
         </p>
         <div class="codeblock">
           <div class="codebar">
-            <span class="codebar__file">CameraController.kt · captureProcessed()</span>
+            <span class="codebar__file">CameraController.kt · capturePhoto()</span>
             <span class="codebar__lang">Kotlin</span>
             <button class="copy-btn" type="button">Kopieer</button>
           </div>
-          <pre><code>suspend fun captureProcessed(palette: Palette, threshold: Float): Bitmap {
+          <pre><code>suspend fun capturePhoto(palette: Palette, threshold: Float): CapturedPhoto {
     val raw = takePicture()
     return withContext(Dispatchers.Default) {
         val width = raw.width
@@ -958,8 +990,7 @@ val boundCamera = provider.bindToLifecycle(
         raw.getPixels(pixels, 0, width, 0, 0, width, height)
         FrameProcessor.process(pixels, width, height, palette, threshold)
         val output = Bitmap.createBitmap(pixels, width, height, Bitmap.Config.ARGB_8888)
-        raw.recycle()
-        output
+        CapturedPhoto(original = raw, processed = output)
     }
 }</code></pre>
         </div>
@@ -968,6 +999,13 @@ val boundCamera = provider.bindToLifecycle(
           1600 pixels. Dat houdt het geheugengebruik en de verwerkingstijd behapbaar.
           De EXIF-informatie van de foto vertelt hoe hij gedraaid moet worden; die stand
           wordt netjes toegepast.
+        </p>
+        <p>
+          <code>CapturedPhoto</code> bewaart twee versies: <code>original</code> is het
+          gewone camerabeeld en <code>processed</code> is hetzelfde beeld in hoog contrast.
+          Het scherm en de galerij gebruiken de verwerkte versie; de tekstherkenning
+          probeert eerst het origineel. Zo werkt OCR ook als de kleuren in het
+          hoog-contrast-beeld net anders uitvallen.
         </p>
 
         <div class="callout callout--tip">
@@ -1465,7 +1503,7 @@ val HighContrastPalettes: List&lt;Palette&gt; = listOf(
             <p><strong>Zelf een combinatie toevoegen?</strong> Dat is een van de makkelijkste
             aanpassingen. Zet een nieuwe regel in de lijst, kies twee kleuren met veel
             contrast en geef de combinatie een duidelijke Nederlandse naam. De knop verschijnt
-            automatisch. Zie hoofdstuk 14.</p>
+            automatisch. Zie hoofdstuk 15.</p>
           </div>
         </div>
       </section>
@@ -1529,9 +1567,148 @@ val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
       </section>
 
       <!-- ================================================================ -->
+      <section class="chapter" id="ocr">
+        <div class="chapter__head">
+          <p class="eyebrow"><span class="eyebrow__num">12</span> Tekst <span class="level level--2">Gemiddeld</span></p>
+          <h2>Tekst herkennen en voorlezen</h2>
+          <p class="chapter__intro">
+            Soms is zelfs een perfect hoog-contrast-beeld nog te veel werk om te lezen.
+            Daarom kan Contrastlezer de tekst ook laten herkennen (OCR: optical character
+            recognition) en in het Nederlands voorlezen. Dat gebeurt allemaal op je toestel,
+            zonder internet.
+          </p>
+        </div>
+
+        <h3>Eerst vastzetten, dan pas herkennen</h3>
+        <p>
+          Tekst herkennen op elk live-frame zou te zwaar zijn en zou onrustig resultaat geven.
+          Daarom werkt het alleen op een <strong>vastgezet beeld</strong>: druk op
+          <strong>Vastzetten</strong> en daarna op <strong>Tekst</strong>. De app gebruikt
+          dezelfde scherpe foto als voor <strong>Foto</strong>, dus je hoeft niet opnieuw te
+          richten.
+        </p>
+
+        <h3>Twee pogingen: origineel en hoog contrast</h3>
+        <p>
+          Bij het vastzetten bewaart de app twee versies van de foto: het originele
+          camerabeeld en het hoog-contrast-beeld. De herkenning probeert eerst het origineel,
+          want daarop is het ML Kit-model getraind. Vindt het daar niets, dan probeert de app
+          het hoog-contrast-beeld. Juist bij lastige kleuren staat de tekst daar vaak
+          duidelijker op.
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">ContrastlezerScreen.kt · recognizeText()</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>var text = textScanner.scan(photo.original)
+if (text.isBlank()) {
+    text = textScanner.scan(photo.processed)
+}
+if (text.isBlank()) {
+    notice = noTextMessage
+} else {
+    scannedText = text
+}</code></pre>
+        </div>
+
+        <h3>De herkenner: TextScanner</h3>
+        <p>
+          <code>TextScanner</code> is een dunne laag om ML Kit, de tekstherkenning van Google
+          die volledig offline werkt. Het Latin-model dekt ook Nederlands. De klasse zet een
+          Bitmap om naar een <code>InputImage</code> en wacht op het antwoord:
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">TextScanner.kt</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>suspend fun scan(bitmap: Bitmap): String =
+    suspendCancellableCoroutine { continuation -&gt;
+        recognizer
+            .process(InputImage.fromBitmap(bitmap, 0))
+            .addOnSuccessListener { result -&gt;
+                continuation.resume(OcrTextCleaner.clean(result.text))
+            }
+            .addOnFailureListener { error -&gt;
+                continuation.resumeWithException(error)
+            }
+    }</code></pre>
+        </div>
+        <p>
+          <code>OcrTextCleaner</code> haalt daarna overtollige spaties weg en voegt lege
+          regels samen. Dat is gewone Kotlin zonder Android-klassen, dus het is met een
+          unittest te controleren.
+        </p>
+
+        <h3>Het grote tekstscherm</h3>
+        <p>
+          <code>TextResultSheet</code> toont de herkende tekst over het hele scherm, in
+          dezelfde kleuren als je gekozen kleurmodus. De letters zijn 32 sp groot en de
+          tekst is scrollbaar. Onderaan staan twee grote knoppen: <strong>Lees voor</strong>
+          (of <strong>Stop</strong>) en <strong>Sluiten</strong>. De terugknop van Android
+          sluit het scherm ook.
+        </p>
+
+        <h3>Voorlezen met de stem van je toestel</h3>
+        <p>
+          <code>SpeechReader</code> gebruikt <code>TextToSpeech</code>, de tekst-naar-spraak
+          die al op Android zit. De app vraagt om het Nederlands (<code>nl-NL</code>). Is er
+          geen Nederlandse stem geïnstalleerd, dan meldt de app dat vriendelijk; je kunt er
+          een installeren via de instellingen van je toestel.
+        </p>
+        <p>
+          Een lange lap tekst past niet in één keer in de spraak-engine.
+          <code>SpeechTextSplitter</code> knipt de tekst daarom in stukken, bij voorkeur na
+          een punt of anders bij een spatie. Elk stuk wordt in dezelfde wachtrij gezet, zodat
+          het als één doorlopend verhaal klinkt.
+        </p>
+        <div class="codeblock">
+          <div class="codebar">
+            <span class="codebar__file">SpeechReader.kt · speak()</span>
+            <span class="codebar__lang">Kotlin</span>
+            <button class="copy-btn" type="button">Kopieer</button>
+          </div>
+          <pre><code>val parts = SpeechTextSplitter.split(text, TextToSpeech.getMaxSpeechInputLength())
+parts.forEachIndexed { index, part -&gt;
+    val mode = if (index == 0) TextToSpeech.QUEUE_FLUSH else TextToSpeech.QUEUE_ADD
+    tts.speak(part, mode, null, utteranceId(index))
+}</code></pre>
+        </div>
+
+        <h3>Automatisch voorlezen</h3>
+        <p>
+          In de instellingen staat de schakelaar <strong>Automatisch voorlezen</strong>.
+          Staat die aan, dan begint de app meteen te spreken zodra er tekst is herkend.
+          Handig als je de app vooral met je oren gebruikt.
+        </p>
+
+        <div class="callout callout--info">
+          <span class="callout__icon" aria-hidden="true">i</span>
+          <div>
+            <p><strong>Waarom de app groter werd.</strong> De offline tekstherkenning van
+            ML Kit heeft een eigen bibliotheek van ongeveer 11 MB per processorarchitectuur.
+            De release-APK bevat daarom alleen de 64-bits ARM-versie, die alle Android 13+
+            telefoons gebruiken. Debug-builds houden alle architecturen voor de emulator.</p>
+          </div>
+        </div>
+
+        <div class="callout callout--tip">
+          <span class="callout__icon" aria-hidden="true">✓</span>
+          <div>
+            <p><strong>Privé blijft privé.</strong> De foto gaat niet naar een server. ML Kit
+            en de spraak-engine werken lokaal, en de app vraagt nog steeds geen
+            internettoegang.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================ -->
       <section class="chapter" id="thema">
         <div class="chapter__head">
-          <p class="eyebrow"><span class="eyebrow__num">12</span> Vormgeving <span class="level level--1">Makkelijk</span></p>
+          <p class="eyebrow"><span class="eyebrow__num">13</span> Vormgeving <span class="level level--1">Makkelijk</span></p>
           <h2>Thema en vormgeving</h2>
           <p class="chapter__intro">
             De app zelf is donker, met gele accenten. Dat is geen toeval: een donker scherm
@@ -1584,13 +1761,13 @@ val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
       <!-- ================================================================ -->
       <section class="chapter" id="tests">
         <div class="chapter__head">
-          <p class="eyebrow"><span class="eyebrow__num">13</span> Controle <span class="level level--2">Gemiddeld</span></p>
+          <p class="eyebrow"><span class="eyebrow__num">14</span> Controle <span class="level level--2">Gemiddeld</span></p>
           <h2>Tests: bewijs dat de rekenkern klopt</h2>
           <p class="chapter__intro">
             Een test is een klein programmaatje dat controleert of een stuk code het
-            verwachte resultaat geeft. Contrastlezer heeft drie testbestanden. Ze draaien
-            op een gewone computer, zonder telefoon of emulator, omdat de rekenkern pure
-            Kotlin is.
+            verwachte resultaat geeft. Contrastlezer heeft vijf testbestanden. Ze draaien
+            op een gewone computer, zonder telefoon of emulator, omdat de rekenkern en de
+            tekstdelen pure Kotlin zijn.
           </p>
         </div>
 
@@ -1610,6 +1787,8 @@ val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
               <tr><td><code>FrameProcessorTest</code></td><td>Maakt een testkaart met tekst op gekleurde vlakken en schrijft het verwerkte resultaat als afbeelding weg.</td></tr>
               <tr><td><code>FrameProcessorStabilityTest</code></td><td>Controleert dat hysterese pixels vasthoudt en dus flikkeren voorkomt.</td></tr>
               <tr><td><code>FrameMotionDetectorTest</code></td><td>Controleert dat stilstand 0 oplevert, verschuiving beweging oplevert en een globale lichtverandering géén beweging is.</td></tr>
+              <tr><td><code>OcrTextCleanerTest</code></td><td>Controleert dat spaties en lege regels in herkende tekst netjes worden opgeruimd.</td></tr>
+              <tr><td><code>SpeechTextSplitterTest</code></td><td>Controleert dat lange tekst op een zinseinde of spatie wordt geknipt en nooit stukken laat vallen.</td></tr>
             </tbody>
           </table>
         </div>
@@ -1655,7 +1834,7 @@ val uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
       <!-- ================================================================ -->
       <section class="chapter" id="aanpassen">
         <div class="chapter__head">
-          <p class="eyebrow"><span class="eyebrow__num">14</span> Zelf doen <span class="level level--2">Gemiddeld</span></p>
+          <p class="eyebrow"><span class="eyebrow__num">15</span> Zelf doen <span class="level level--2">Gemiddeld</span></p>
           <h2>Zelf iets aanpassen</h2>
           <p class="chapter__intro">
             De beste manier om code te leren is een kleine, veilige verandering maken.
@@ -1824,7 +2003,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
       <!-- ================================================================ -->
       <section class="chapter" id="begrippen">
         <div class="chapter__head">
-          <p class="eyebrow"><span class="eyebrow__num">15</span> Naslag <span class="level level--1">Makkelijk</span></p>
+          <p class="eyebrow"><span class="eyebrow__num">16</span> Naslag <span class="level level--1">Makkelijk</span></p>
           <h2>Begrippenlijst</h2>
           <p class="chapter__intro">
             Kom je een woord tegen dat je niet kent? Zoek het hier op. De uitleg is bewust
@@ -1848,12 +2027,14 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
           <div class="term"><dt>Integraalbeeld</dt><dd>Een optelsom van alle waarden tot een punt. Maakt snelle gemiddelden van rechthoeken mogelijk.</dd></div>
           <div class="term"><dt>Kotlin</dt><dd>De programmeertaal waarin de app is geschreven. Draait op de Java Virtual Machine.</dd></div>
           <div class="term"><dt>MediaStore</dt><dd>De nette Android-manier om foto's aan de galerij toe te voegen.</dd></div>
-          <div class="term"><dt>OCR</dt><dd>Optical Character Recognition: letters herkennen en omzetten naar tekst. Contrastlezer doet dit bewust niet.</dd></div>
+          <div class="term"><dt>ML Kit</dt><dd>De offline bibliotheek van Google die in Contrastlezer tekst herkent (OCR) en gezichten of barcodes zou kunnen herkennen.</dd></div>
+          <div class="term"><dt>OCR</dt><dd>Optical Character Recognition: letters herkennen en omzetten naar tekst. Contrastlezer gebruikt dit op een vastgezet beeld, zodat je de tekst groot kunt lezen of laten voorlezen.</dd></div>
           <div class="term"><dt>Pixel</dt><dd>Eén klein puntje van een beeld, met een eigen kleur.</dd></div>
           <div class="term"><dt>RGBA</dt><dd>Rood, Groen, Blauw en Alpha. Dezelfde informatie als ARGB, maar in een andere volgorde.</dd></div>
           <div class="term"><dt>State</dt><dd>Gegevens die het scherm moet onthouden, zoals de gekozen kleur of de zoomstand.</dd></div>
           <div class="term"><dt>Standaardafwijking</dt><dd>Een maat voor hoeveel waarden van hun gemiddelde afwijken. De app gebruikt het als maat voor lokaal contrast.</dd></div>
           <div class="term"><dt>Thread</dt><dd>Een aparte werkstroom. Zo kan de camera rekenen terwijl het scherm blijft reageren.</dd></div>
+          <div class="term"><dt>TTS</dt><dd>Text-to-Speech: tekst laten uitspreken door de spraak-engine van je toestel.</dd></div>
           <div class="term"><dt>Unit test</dt><dd>Een kleine automatische controle van één stukje code, zonder telefoon of emulator.</dd></div>
           <div class="term"><dt>Volatile</dt><dd>Een eigenschap in Kotlin die tussen threads altijd vers wordt gelezen.</dd></div>
           <div class="term"><dt>Zoomratio</dt><dd>Hoeveel keer de camera is vergroot. 1× is normaal, 2× is twee keer zo dichtbij.</dd></div>
@@ -1863,7 +2044,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
       <!-- ================================================================ -->
       <section class="chapter" id="vragen">
         <div class="chapter__head">
-          <p class="eyebrow"><span class="eyebrow__num">16</span> Hulp <span class="level level--1">Makkelijk</span></p>
+          <p class="eyebrow"><span class="eyebrow__num">17</span> Hulp <span class="level level--1">Makkelijk</span></p>
           <h2>Veelgestelde vragen</h2>
           <p class="chapter__intro">
             De vragen die het vaakst opkomen, met een kort antwoord.
@@ -1881,7 +2062,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
           <details>
             <summary>Leest de app de tekst voor?</summary>
             <div class="faq__body">
-              <p>Nee. Er zit geen tekstherkenning in. De app verandert alleen het beeld. Dat is sneller, werkt met elke taal en elk lettertype, en verstuurt niets.</p>
+              <p>Ja, als je dat wilt. Zet het beeld vast, druk op <strong>Tekst</strong> en daarna op <strong>Lees voor</strong>. De tekstherkenning en het voorlezen gebeuren volledig op je toestel. In de instellingen kun je ook "Automatisch voorlezen" aanzetten, zodat de app meteen begint te spreken.</p>
             </div>
           </details>
 
@@ -1930,7 +2111,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk</code></pre>
           <details>
             <summary>Ik wil de code aanpassen. Waar begin ik?</summary>
             <div class="faq__body">
-              <p>Begin met een kleur in <code>Palettes.kt</code> of een tekst in <code>strings.xml</code>. Dat zijn kleine, veilige wijzigingen. Lees daarna hoofdstuk 14 voor de volledige recepten en draai altijd de tests voordat je iets deelt.</p>
+              <p>Begin met een kleur in <code>Palettes.kt</code> of een tekst in <code>strings.xml</code>. Dat zijn kleine, veilige wijzigingen. Lees daarna hoofdstuk 15 voor de volledige recepten en draai altijd de tests voordat je iets deelt.</p>
             </div>
           </details>
 
