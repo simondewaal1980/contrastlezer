@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Button
@@ -95,6 +96,7 @@ import nl.contrastlezer.camera.CapturedPhoto
 import nl.contrastlezer.image.GallerySaver
 import nl.contrastlezer.image.HighContrastPalettes
 import nl.contrastlezer.image.Palette
+import nl.contrastlezer.ocr.TextScanner
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
@@ -156,6 +158,8 @@ private fun CameraContent() {
     var maxZoomRatio by remember { mutableFloatStateOf(1f) }
     var frozen by remember { mutableStateOf<CapturedPhoto?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var scanning by remember { mutableStateOf(false) }
+    var scannedText by remember { mutableStateOf<String?>(null) }
     var stabilization by rememberSaveable { mutableStateOf(true) }
     var hardwareStabilization by remember { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
@@ -163,6 +167,7 @@ private fun CameraContent() {
     var liveFrame by remember { mutableStateOf<LiveFrame?>(null) }
 
     val controller = remember { CameraController(context) }
+    val textScanner = remember { TextScanner() }
 
     val palette = HighContrastPalettes[paletteIndex]
     val threshold = sensitivityToThreshold(sensitivity) * 255f
@@ -170,6 +175,8 @@ private fun CameraContent() {
     val captureFailedMessage = stringResource(R.string.capture_failed)
     val savedMessage = stringResource(R.string.saved)
     val saveFailedMessage = stringResource(R.string.save_failed)
+    val noTextMessage = stringResource(R.string.ocr_empty)
+    val ocrFailedMessage = stringResource(R.string.ocr_failed)
 
     DisposableEffect(controller) {
         controller.onFrame = { bitmap ->
@@ -179,6 +186,10 @@ private fun CameraContent() {
             controller.onFrame = null
             controller.release()
         }
+    }
+
+    DisposableEffect(textScanner) {
+        onDispose { textScanner.close() }
     }
 
     LaunchedEffect(notice) {
@@ -223,6 +234,31 @@ private fun CameraContent() {
                 notice = captureFailedMessage
             } finally {
                 busy = false
+            }
+        }
+    }
+
+    fun recognizeText(photo: CapturedPhoto) {
+        if (scanning) return
+        scope.launch {
+            scanning = true
+            try {
+                // Eerst het originele beeld: ML Kit is daarop getraind. Lukt het
+                // daar niet, probeer dan het hoog-contrast-beeld; juist bij
+                // lastige kleuren staat de tekst daar duidelijker op.
+                var text = textScanner.scan(photo.original)
+                if (text.isBlank()) {
+                    text = textScanner.scan(photo.processed)
+                }
+                if (text.isBlank()) {
+                    notice = noTextMessage
+                } else {
+                    scannedText = text
+                }
+            } catch (t: Throwable) {
+                notice = ocrFailedMessage
+            } finally {
+                scanning = false
             }
         }
     }
@@ -283,7 +319,7 @@ private fun CameraContent() {
             }
         }
 
-        if (busy) {
+        if (busy || scanning) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -388,6 +424,13 @@ private fun CameraContent() {
                     modifier = Modifier.weight(1f),
                 )
                 ControlButton(
+                    icon = Icons.Rounded.TextFields,
+                    label = stringResource(R.string.read_text),
+                    enabled = frozen != null && !scanning && !busy,
+                    onClick = { frozen?.let { recognizeText(it) } },
+                    modifier = Modifier.weight(1f),
+                )
+                ControlButton(
                     icon = Icons.Rounded.PhotoCamera,
                     label = stringResource(R.string.photo),
                     enabled = !busy,
@@ -429,6 +472,14 @@ private fun CameraContent() {
                     modifier = Modifier.weight(1f),
                 )
             }
+        }
+
+        scannedText?.let { text ->
+            TextResultSheet(
+                text = text,
+                palette = palette,
+                onClose = { scannedText = null },
+            )
         }
     }
 }

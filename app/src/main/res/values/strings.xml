@@ -10,6 +10,11 @@
     <string name="freeze">Vastzetten</string>
     <string name="resume">Hervat</string>
     <string name="photo">Foto</string>
+    <string name="read_text">Tekst</string>
+    <string name="ocr_title">Herkende tekst</string>
+    <string name="ocr_empty">Geen tekst gevonden. Richt de camera op tekst en zet opnieuw vast.</string>
+    <string name="ocr_failed">Tekst herkennen is mislukt</string>
+    <string name="close">Sluiten</string>
     <string name="torch">Lamp</string>
     <string name="switch_camera">Wissel</string>
     <string name="settings">Instellingen</string>
