@@ -34,6 +34,12 @@ object FrameProcessor {
      *   als tekst wordt gezien.
      * @param radiusFraction meetstraal als fractie van de beeldbreedte.
      * @param stdFactor hoe sterk de drempel meeschaalt met het lokale contrast.
+     * @param previousMask optionele masker van het vorige frame (1 = tekst,
+     *   0 = achtergrond, negatief = onbekend). Wordt bijgewerkt en zorgt met
+     *   [hysteresis] voor een rustiger beeld: een pixel klapt pas om als het
+     *   verschil duidelijk boven (of onder) de drempel komt.
+     * @param hysteresis extra marge in 0..255 rond de drempel. 0 schakelt het
+     *   vasthouden van de vorige toestand uit.
      */
     fun process(
         pixels: IntArray,
@@ -43,8 +49,11 @@ object FrameProcessor {
         threshold: Float,
         radiusFraction: Float = RADIUS_FRACTION,
         stdFactor: Float = 1.1f,
+        previousMask: IntArray? = null,
+        hysteresis: Float = 0f,
     ) {
         if (width <= 0 || height <= 0 || pixels.size < width * height) return
+        val mask = previousMask?.takeIf { it.size >= width * height }
 
         val blockWidth = (width + BLOCK - 1) / BLOCK
         val blockHeight = (height + BLOCK - 1) / BLOCK
@@ -198,8 +207,30 @@ object FrameProcessor {
                 val localContrast = sqrt(variance)
                 val adaptiveThreshold = max(threshold, stdFactor * localContrast)
 
-                val difference = max(luminanceDiff.toFloat(), chromaDiff * 0.6f)
-                pixels[index] = if (difference >= adaptiveThreshold) foreground else background
+                val difference = max(luminanceDiff, chromaDiff * 0.6f)
+
+                // Hysterese: blijf bij de vorige keuze zolang het verschil
+                // niet duidelijk de andere kant op wijst. Dit voorkomt dat
+                // pixels bij elke frame heen en weer springen.
+                val previousState = mask?.get(index)
+                val effectiveThreshold = if (
+                    previousState != null && previousState >= 0 && hysteresis > 0f
+                ) {
+                    if (previousState == 1) {
+                        // Tekst blijft tekst tot het verschil duidelijk wegvalt.
+                        adaptiveThreshold - hysteresis
+                    } else {
+                        // Achtergrond blijft achtergrond tot het verschil
+                        // duidelijk boven de drempel uitkomt.
+                        adaptiveThreshold + hysteresis
+                    }
+                } else {
+                    adaptiveThreshold
+                }
+
+                val isForeground = difference >= effectiveThreshold
+                mask?.set(index, if (isForeground) 1 else 0)
+                pixels[index] = if (isForeground) foreground else background
                 index++
             }
         }
