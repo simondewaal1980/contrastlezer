@@ -39,6 +39,7 @@ import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.TextFields
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material3.Button
@@ -91,9 +92,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import nl.contrastlezer.R
 import nl.contrastlezer.camera.CameraController
+import nl.contrastlezer.camera.CapturedPhoto
 import nl.contrastlezer.image.GallerySaver
 import nl.contrastlezer.image.HighContrastPalettes
 import nl.contrastlezer.image.Palette
+import nl.contrastlezer.ocr.SpeechReader
+import nl.contrastlezer.ocr.TextScanner
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
@@ -153,8 +157,12 @@ private fun CameraContent() {
     var torchOn by remember { mutableStateOf(false) }
     var hasFlash by remember { mutableStateOf(false) }
     var maxZoomRatio by remember { mutableFloatStateOf(1f) }
-    var frozen by remember { mutableStateOf<Bitmap?>(null) }
+    var frozen by remember { mutableStateOf<CapturedPhoto?>(null) }
     var busy by remember { mutableStateOf(false) }
+    var scanning by remember { mutableStateOf(false) }
+    var scannedText by remember { mutableStateOf<String?>(null) }
+    var speech by remember { mutableStateOf<SpeechReader?>(null) }
+    var autoSpeak by rememberSaveable { mutableStateOf(false) }
     var stabilization by rememberSaveable { mutableStateOf(true) }
     var hardwareStabilization by remember { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
@@ -162,6 +170,7 @@ private fun CameraContent() {
     var liveFrame by remember { mutableStateOf<LiveFrame?>(null) }
 
     val controller = remember { CameraController(context) }
+    val textScanner = remember { TextScanner() }
 
     val palette = HighContrastPalettes[paletteIndex]
     val threshold = sensitivityToThreshold(sensitivity) * 255f
@@ -169,6 +178,9 @@ private fun CameraContent() {
     val captureFailedMessage = stringResource(R.string.capture_failed)
     val savedMessage = stringResource(R.string.saved)
     val saveFailedMessage = stringResource(R.string.save_failed)
+    val noTextMessage = stringResource(R.string.ocr_empty)
+    val ocrFailedMessage = stringResource(R.string.ocr_failed)
+    val ttsFailedMessage = stringResource(R.string.tts_failed)
 
     DisposableEffect(controller) {
         controller.onFrame = { bitmap ->
@@ -178,6 +190,14 @@ private fun CameraContent() {
             controller.onFrame = null
             controller.release()
         }
+    }
+
+    DisposableEffect(textScanner) {
+        onDispose { textScanner.close() }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { speech?.close() }
     }
 
     LaunchedEffect(notice) {
@@ -211,17 +231,52 @@ private fun CameraContent() {
     LaunchedEffect(stabilization) { controller.stabilization = stabilization }
     LaunchedEffect(frozen) { controller.paused = frozen != null }
 
-    fun snap(onResult: (Bitmap) -> Unit) {
+    fun ensureSpeechReader(): SpeechReader {
+        speech?.let { return it }
+        val reader = SpeechReader(context)
+        reader.onError = { notice = ttsFailedMessage }
+        speech = reader
+        return reader
+    }
+
+    fun snap(onResult: (CapturedPhoto) -> Unit) {
         if (busy) return
         scope.launch {
             busy = true
             try {
-                val bitmap = controller.captureProcessed(palette, threshold)
-                onResult(bitmap)
+                val photo = controller.capturePhoto(palette, threshold)
+                onResult(photo)
             } catch (t: Throwable) {
                 notice = captureFailedMessage
             } finally {
                 busy = false
+            }
+        }
+    }
+
+    fun recognizeText(photo: CapturedPhoto) {
+        if (scanning) return
+        scope.launch {
+            scanning = true
+            try {
+                // Eerst het originele beeld: ML Kit is daarop getraind. Lukt het
+                // daar niet, probeer dan het hoog-contrast-beeld; juist bij
+                // lastige kleuren staat de tekst daar duidelijker op.
+                var text = textScanner.scan(photo.original)
+                if (text.isBlank()) {
+                    text = textScanner.scan(photo.processed)
+                }
+                if (text.isBlank()) {
+                    notice = noTextMessage
+                } else {
+                    val reader = ensureSpeechReader()
+                    scannedText = text
+                    if (autoSpeak) reader.speak(text)
+                }
+            } catch (t: Throwable) {
+                notice = ocrFailedMessage
+            } finally {
+                scanning = false
             }
         }
     }
@@ -260,8 +315,8 @@ private fun CameraContent() {
                 },
         )
 
-        frozen?.let { image ->
-            FrozenOverlay(image)
+        frozen?.let { photo ->
+            FrozenOverlay(photo.processed)
         }
 
         notice?.let { message ->
@@ -282,7 +337,7 @@ private fun CameraContent() {
             }
         }
 
-        if (busy) {
+        if (busy || scanning) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -343,6 +398,8 @@ private fun CameraContent() {
                     stabilization = stabilization,
                     onStabilization = { stabilization = it },
                     hardwareStabilization = hardwareStabilization,
+                    autoSpeak = autoSpeak,
+                    onAutoSpeak = { autoSpeak = it },
                     hasFlash = hasFlash,
                     torchOn = torchOn,
                     onTorch = { torchOn = !torchOn },
@@ -381,9 +438,16 @@ private fun CameraContent() {
                         } else {
                             // Een echte foto geeft een scherper en rustiger
                             // beeld dan het laatste live-frame.
-                            snap { bitmap -> frozen = bitmap }
+                            snap { photo -> frozen = photo }
                         }
                     },
+                    modifier = Modifier.weight(1f),
+                )
+                ControlButton(
+                    icon = Icons.Rounded.TextFields,
+                    label = stringResource(R.string.read_text),
+                    enabled = frozen != null && !scanning && !busy,
+                    onClick = { frozen?.let { recognizeText(it) } },
                     modifier = Modifier.weight(1f),
                 )
                 ControlButton(
@@ -391,12 +455,12 @@ private fun CameraContent() {
                     label = stringResource(R.string.photo),
                     enabled = !busy,
                     onClick = {
-                        val frozenImage = frozen
-                        if (frozenImage != null) {
+                        val frozenPhoto = frozen
+                        if (frozenPhoto != null) {
                             scope.launch {
                                 try {
                                     withContext(Dispatchers.IO) {
-                                        GallerySaver.save(context, frozenImage)
+                                        GallerySaver.save(context, frozenPhoto.processed)
                                     }
                                     notice = savedMessage
                                 } catch (t: Throwable) {
@@ -404,11 +468,11 @@ private fun CameraContent() {
                                 }
                             }
                         } else {
-                            snap { bitmap ->
+                            snap { photo ->
                                 scope.launch {
                                     try {
                                         withContext(Dispatchers.IO) {
-                                            GallerySaver.save(context, bitmap)
+                                            GallerySaver.save(context, photo.processed)
                                         }
                                         notice = savedMessage
                                     } catch (t: Throwable) {
@@ -426,6 +490,21 @@ private fun CameraContent() {
                     active = showSettings,
                     onClick = { showSettings = !showSettings },
                     modifier = Modifier.weight(1f),
+                )
+            }
+        }
+
+        scannedText?.let { text ->
+            val reader = speech
+            if (reader != null) {
+                TextResultSheet(
+                    text = text,
+                    palette = palette,
+                    speech = reader,
+                    onClose = {
+                        reader.stop()
+                        scannedText = null
+                    },
                 )
             }
         }
@@ -576,6 +655,7 @@ private fun PermissionScreen(denied: Boolean, onRequest: () -> Unit) {
         Text(
             text = stringResource(R.string.permission_title),
             style = androidx.compose.material3.MaterialTheme.typography.titleLarge,
+            color = Color.White,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(12.dp))
@@ -584,6 +664,7 @@ private fun PermissionScreen(denied: Boolean, onRequest: () -> Unit) {
                 if (denied) R.string.permission_denied else R.string.permission_body,
             ),
             style = androidx.compose.material3.MaterialTheme.typography.bodyLarge,
+            color = Color(0xFFF2F2F2),
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(28.dp))
@@ -600,6 +681,7 @@ private fun PermissionScreen(denied: Boolean, onRequest: () -> Unit) {
         ) {
             Text(
                 text = stringResource(R.string.permission_button),
+                color = Color.Black,
                 fontSize = 19.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -707,6 +789,8 @@ private fun SettingsPanel(
     stabilization: Boolean,
     onStabilization: (Boolean) -> Unit,
     hardwareStabilization: Boolean,
+    autoSpeak: Boolean,
+    onAutoSpeak: (Boolean) -> Unit,
     hasFlash: Boolean,
     torchOn: Boolean,
     onTorch: () -> Unit,
@@ -746,6 +830,29 @@ private fun SettingsPanel(
                     text = stringResource(R.string.hardware_stabilization),
                     color = Color(0xFF9CCC65),
                     fontSize = 12.sp,
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.auto_speak),
+                        color = Color.White,
+                        fontSize = 15.sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.auto_speak_description),
+                        color = Color(0xFFBDBDBD),
+                        fontSize = 12.sp,
+                    )
+                }
+                Switch(
+                    checked = autoSpeak,
+                    onCheckedChange = onAutoSpeak,
+                    modifier = Modifier.padding(start = 12.dp),
                 )
             }
 

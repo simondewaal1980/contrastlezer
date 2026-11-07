@@ -26,6 +26,13 @@ verdwijnen, het vormverschil van de letters blijft over.
   worden verschoven.
 - **Foto**: slaat het verwerkte beeld op in `Afbeeldingen/Contrastlezer`
   (wanneer vastgezet: precies het vastgezette beeld).
+- **Tekst herkennen (OCR)**: zet het beeld vast en druk op `Tekst`. De app
+  herkent de letters met ML Kit (offline) en toont ze in zeer groot contrast.
+  Lukt herkennen op het originele beeld niet, dan probeert de app het
+  hoog-contrast-beeld.
+- **Voorlezen**: de herkende tekst kan in het Nederlands worden voorgelezen
+  met de tekst-naar-spraak-engine van Android. In de instellingen is
+  `Automatisch voorlezen` aan te zetten.
 - **Zaklamp** en **camera wisselen** (in de instellingen).
 - Grote knoppen en royale raakvlakken, zodat de app ook met een minder goede
   motoriek te bedienen is. Scherm blijft aan, vaste staande oriëntatie,
@@ -48,6 +55,8 @@ Open de pagina lokaal in je browser, of bekijk de online versie via GitHub Pages
 
 - Android 13 (API 33) of nieuwer.
 - Camera op het toestel.
+- Voor voorlezen: een Nederlandse tekst-naar-spraak-stem (meestal al aanwezig;
+  anders te installeren via de instellingen van het toestel).
 
 ## Bouwen
 
@@ -75,8 +84,11 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 5. Vergroot met de grote `+`- en `−`-knoppen, de zoom-schuif of door te
    knijpen. In een vastgezet beeld kun je met één vinger verschuiven.
 6. `Foto` bewaart het verwerkte beeld in de galerij.
-7. Via `Instellingen` pas je stabilisatie, gevoeligheid, zoom, zaklamp en
-   camera aan.
+7. `Tekst` herkent de tekst in het vastgezette beeld en toont die groot.
+   Met `Lees voor` spreekt de app de tekst uit; `Sluiten` of de terugknop
+   gaat terug naar het camerabeeld.
+8. Via `Instellingen` pas je stabilisatie, gevoeligheid, zoom, zaklamp,
+   camera en automatisch voorlezen aan.
 
 ## Techniek
 
@@ -98,6 +110,17 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
   flikkerende letters.
 - Optische en elektronische stabilisatie worden via `Camera2Interop`
   aangevraagd als het toestel die modi ondersteunt.
+- Tekstherkenning gebruikt **ML Kit Text Recognition v2** (bundled,
+  `com.google.mlkit:text-recognition`): volledig offline, Latin-model (dekt
+  Nederlands), geen extra permissies. Bij vastzetten blijven zowel het
+  originele als het hoog-contrast-beeld bewaard; OCR probeert eerst het
+  origineel en daarna het hoog-contrast-beeld.
+- Voorlezen gebruikt Android `TextToSpeech` met locale `nl-NL`. Lange tekst
+  wordt in stukken geknipt (`SpeechTextSplitter`) en als één wachtrij
+  afgespeeld.
+- Omdat de bundled ML Kit-bibliotheek ±11 MB per ABI kost, bevat de
+  release-APK alleen `arm64-v8a` (alle Android 13+-telefoons); debug-builds
+  houden alle architecturen voor de emulator.
 
 ## Testen zonder toestel
 
@@ -109,3 +132,5 @@ Dit rendert een testkaart (tekst op gekleurde vlakken) door de verwerking en
 schrijft het resultaat naar `app/build/test-output/`. Daarnaast testen
 `FrameMotionDetectorTest` en `FrameProcessorStabilityTest` de
 bewegingsdetectie en het vasthouden van pixels bij kleine verschillen.
+`OcrTextCleanerTest` en `SpeechTextSplitterTest` controleren het opruimen van
+herkende tekst en het knippen van lange tekst voor de spraak-engine.

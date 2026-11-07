@@ -19,6 +19,9 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            // ML Kit levert een grote native bibliotheek per ABI. Telefoons met
+            // Android 13+ zijn 64-bit; alleen debug houdt alle ABI's voor de emulator.
+            ndk { abiFilters += "arm64-v8a" }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("debug")
         }
@@ -66,6 +69,8 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.exifinterface)
+
+    implementation(libs.mlkit.text.recognition)
 
     testImplementation(libs.junit)
 }

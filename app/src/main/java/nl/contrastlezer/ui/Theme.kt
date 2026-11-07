@@ -30,13 +30,11 @@ private val ContrastlezerTypography = Typography(
     bodyLarge = TextStyle(
         fontSize = 18.sp,
         lineHeight = 26.sp,
-        color = Color(0xFFF2F2F2),
     ),
     titleLarge = TextStyle(
         fontSize = 26.sp,
         lineHeight = 32.sp,
         fontWeight = FontWeight.Bold,
-        color = Color.White,
     ),
     labelLarge = TextStyle(
         fontSize = 15.sp,
